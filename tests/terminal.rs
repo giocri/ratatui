@@ -2,6 +2,7 @@ use std::error::Error;
 
 use ratatui::{
     backend::TestBackend,
+    buffer::{Buffer, DefaultBuffer},
     layout::Rect,
     widgets::{Block, Paragraph, Widget},
     Terminal, TerminalOptions, Viewport,
@@ -14,9 +15,9 @@ fn swap_buffer_clears_prev_buffer() {
     terminal
         .current_buffer_mut()
         .set_string(0, 0, "Hello", ratatui::style::Style::reset());
-    assert_eq!(terminal.current_buffer_mut().content()[0].symbol(), "H");
+    assert_eq!(terminal.current_buffer_mut().content[0].symbol(), "H");
     terminal.swap_buffers();
-    assert_eq!(terminal.current_buffer_mut().content()[0].symbol(), " ");
+    assert_eq!(terminal.current_buffer_mut().content[0].symbol(), " ");
 }
 
 #[test]

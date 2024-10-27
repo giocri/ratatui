@@ -410,7 +410,7 @@ impl Sparkline<'_> {
                 } else {
                     height = 0;
                 }
-                buf[(x, spark_area.top() + j)]
+                buf[(x, spark_area.top() + j).into()]
                     .set_symbol(symbol)
                     .set_style(self.style.patch(style.unwrap_or_default()));
             }

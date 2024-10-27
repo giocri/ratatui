@@ -93,7 +93,7 @@ impl DefaultBuffer {
         Some(y * width + x)
     }
 }
-pub trait Buffer {
+pub trait Buffer: Index<Position, Output = Cell> + IndexMut<Position, Output = Cell> {
     /// Returns a Buffer with all cells set to the default one
     #[must_use]
     fn empty(area: Rect) -> Self;

@@ -2,7 +2,7 @@ use std::io;
 
 use ratatui::{
     backend::TestBackend,
-    buffer::Buffer,
+    buffer::{Buffer, DefaultBuffer},
     layout::Rect,
     style::{Color, Style, Stylize},
     widgets::{BarChart, Block, Paragraph},
@@ -28,7 +28,7 @@ fn barchart_can_be_stylized() {
         })
         .unwrap();
 
-    let mut expected = Buffer::with_lines([
+    let mut expected = DefaultBuffer::with_lines([
         "      ██ ",
         "   ▅▅ ██ ",
         "▂▂ ██ ██ ",

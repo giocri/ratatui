@@ -143,8 +143,7 @@ impl TestBackend {
     #[allow(deprecated)]
     #[track_caller]
     pub fn assert_buffer(&self, expected: &DefaultBuffer) {
-        // TODO: use assert_eq!()
-        crate::assert_buffer_eq!(&self.buffer, expected);
+        assert_eq!(&self.buffer, expected);
     }
 
     /// Asserts that the `TestBackend`'s scrollback buffer is equal to the expected buffer.
@@ -441,16 +440,16 @@ impl Backend for TestBackend {
 /// Append the provided cells to the bottom of a scrollback buffer. The number of cells must be a
 /// multiple of the buffer's width. If the scrollback buffer ends up larger than 65535 lines tall,
 /// then lines will be removed from the top to get it down to size.
-fn append_to_scrollback(scrollback: &mut impl Buffer, cells: impl IntoIterator<Item = Cell>) {
-    scrollback.content().extend(cells);
+fn append_to_scrollback(scrollback: &mut DefaultBuffer, cells: impl IntoIterator<Item = Cell>) {
+    scrollback.content.extend(cells);
     let width = scrollback.area().width as usize;
     let new_height = (scrollback.content().len() / width).min(u16::MAX as usize);
     let keep_from = scrollback
         .content()
         .len()
         .saturating_sub(width * u16::MAX as usize);
-    scrollback.content().drain(0..keep_from);
-    scrollback.area().height = new_height as u16;
+    scrollback.content.drain(0..keep_from);
+    scrollback.area.height = new_height as u16;
 }
 
 #[cfg(test)]
@@ -464,8 +463,8 @@ mod tests {
         assert_eq!(
             TestBackend::new(10, 2),
             TestBackend {
-                buffer: Buffer::with_lines(["          "; 2]),
-                scrollback: Buffer::empty(Rect::new(0, 0, 10, 0)),
+                buffer: DefaultBuffer::with_lines(["          "; 2]),
+                scrollback: DefaultBuffer::empty(Rect::new(0, 0, 10, 0)),
                 cursor: false,
                 pos: (0, 0),
             }
@@ -473,14 +472,14 @@ mod tests {
     }
     #[test]
     fn test_buffer_view() {
-        let buffer = Buffer::with_lines(["aaaa"; 2]);
+        let buffer = DefaultBuffer::with_lines(["aaaa"; 2]);
         assert_eq!(buffer_view(&buffer), "\"aaaa\"\n\"aaaa\"\n");
     }
 
     #[test]
     fn buffer_view_with_overwrites() {
         let multi_byte_char = "👨‍👩‍👧‍👦"; // renders 2 wide
-        let buffer = Buffer::with_lines([multi_byte_char]);
+        let buffer = DefaultBuffer::with_lines([multi_byte_char]);
         assert_eq!(
             buffer_view(&buffer),
             format!(

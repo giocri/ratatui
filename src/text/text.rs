@@ -726,14 +726,14 @@ impl fmt::Display for Text<'_> {
 }
 
 impl Widget for Text<'_> {
-    fn render(self, area: Rect, buf: &mut Buffer) {
+    fn render(self, area: Rect, buf: &mut impl Buffer) {
         self.render_ref(area, buf);
     }
 }
 
 impl WidgetRef for Text<'_> {
-    fn render_ref(&self, area: Rect, buf: &mut Buffer) {
-        let area = area.intersection(buf.area);
+    fn render_ref(&self, area: Rect, buf: &mut impl Buffer) {
+        let area = area.intersection(buf.area().clone());
         buf.set_style(area, self.style);
         for (line, line_area) in self.iter().zip(area.rows()) {
             line.render_with_alignment(line_area, buf, self.alignment);
@@ -760,11 +760,14 @@ mod tests {
     use rstest::{fixture, rstest};
 
     use super::*;
-    use crate::style::{Color, Modifier, Stylize};
+    use crate::{
+        buffer::DefaultBuffer,
+        style::{Color, Modifier, Stylize},
+    };
 
     #[fixture]
-    fn small_buf() -> Buffer {
-        Buffer::empty(Rect::new(0, 0, 10, 1))
+    fn small_buf() -> DefaultBuffer {
+        DefaultBuffer::empty(Rect::new(0, 0, 10, 1))
     }
 
     #[test]
@@ -1142,70 +1145,70 @@ mod tests {
         fn render() {
             let text = Text::from("foo");
             let area = Rect::new(0, 0, 5, 1);
-            let mut buf = Buffer::empty(area);
+            let mut buf = DefaultBuffer::empty(area);
             text.render(area, &mut buf);
-            assert_eq!(buf, Buffer::with_lines(["foo  "]));
+            assert_eq!(buf, DefaultBuffer::with_lines(["foo  "]));
         }
 
         #[rstest]
-        fn render_out_of_bounds(mut small_buf: Buffer) {
+        fn render_out_of_bounds(mut small_buf: DefaultBuffer) {
             let out_of_bounds_area = Rect::new(20, 20, 10, 1);
             Text::from("Hello, world!").render(out_of_bounds_area, &mut small_buf);
-            assert_eq!(small_buf, Buffer::empty(small_buf.area));
+            assert_eq!(small_buf, DefaultBuffer::empty(small_buf.area));
         }
 
         #[test]
         fn render_right_aligned() {
             let text = Text::from("foo").alignment(Alignment::Right);
             let area = Rect::new(0, 0, 5, 1);
-            let mut buf = Buffer::empty(area);
+            let mut buf = DefaultBuffer::empty(area);
             text.render(area, &mut buf);
-            assert_eq!(buf, Buffer::with_lines(["  foo"]));
+            assert_eq!(buf, DefaultBuffer::with_lines(["  foo"]));
         }
 
         #[test]
         fn render_centered_odd() {
             let text = Text::from("foo").alignment(Alignment::Center);
             let area = Rect::new(0, 0, 5, 1);
-            let mut buf = Buffer::empty(area);
+            let mut buf = DefaultBuffer::empty(area);
             text.render(area, &mut buf);
-            assert_eq!(buf, Buffer::with_lines([" foo "]));
+            assert_eq!(buf, DefaultBuffer::with_lines([" foo "]));
         }
 
         #[test]
         fn render_centered_even() {
             let text = Text::from("foo").alignment(Alignment::Center);
             let area = Rect::new(0, 0, 6, 1);
-            let mut buf = Buffer::empty(area);
+            let mut buf = DefaultBuffer::empty(area);
             text.render(area, &mut buf);
-            assert_eq!(buf, Buffer::with_lines([" foo  "]));
+            assert_eq!(buf, DefaultBuffer::with_lines([" foo  "]));
         }
 
         #[test]
         fn render_right_aligned_with_truncation() {
             let text = Text::from("123456789").alignment(Alignment::Right);
             let area = Rect::new(0, 0, 5, 1);
-            let mut buf = Buffer::empty(area);
+            let mut buf = DefaultBuffer::empty(area);
             text.render(area, &mut buf);
-            assert_eq!(buf, Buffer::with_lines(["56789"]));
+            assert_eq!(buf, DefaultBuffer::with_lines(["56789"]));
         }
 
         #[test]
         fn render_centered_odd_with_truncation() {
             let text = Text::from("123456789").alignment(Alignment::Center);
             let area = Rect::new(0, 0, 5, 1);
-            let mut buf = Buffer::empty(area);
+            let mut buf = DefaultBuffer::empty(area);
             text.render(area, &mut buf);
-            assert_eq!(buf, Buffer::with_lines(["34567"]));
+            assert_eq!(buf, DefaultBuffer::with_lines(["34567"]));
         }
 
         #[test]
         fn render_centered_even_with_truncation() {
             let text = Text::from("123456789").alignment(Alignment::Center);
             let area = Rect::new(0, 0, 6, 1);
-            let mut buf = Buffer::empty(area);
+            let mut buf = DefaultBuffer::empty(area);
             text.render(area, &mut buf);
-            assert_eq!(buf, Buffer::with_lines(["234567"]));
+            assert_eq!(buf, DefaultBuffer::with_lines(["234567"]));
         }
 
         #[test]
@@ -1216,28 +1219,28 @@ mod tests {
             ])
             .alignment(Alignment::Right);
             let area = Rect::new(0, 0, 5, 2);
-            let mut buf = Buffer::empty(area);
+            let mut buf = DefaultBuffer::empty(area);
             text.render(area, &mut buf);
-            assert_eq!(buf, Buffer::with_lines(["  foo", " bar "]));
+            assert_eq!(buf, DefaultBuffer::with_lines(["  foo", " bar "]));
         }
 
         #[test]
         fn render_only_styles_line_area() {
             let area = Rect::new(0, 0, 5, 1);
-            let mut buf = Buffer::empty(area);
+            let mut buf = DefaultBuffer::empty(area);
             Text::from("foo".on_blue()).render(area, &mut buf);
 
-            let mut expected = Buffer::with_lines(["foo  "]);
+            let mut expected = DefaultBuffer::with_lines(["foo  "]);
             expected.set_style(Rect::new(0, 0, 3, 1), Style::new().bg(Color::Blue));
             assert_eq!(buf, expected);
         }
 
         #[test]
         fn render_truncates() {
-            let mut buf = Buffer::empty(Rect::new(0, 0, 6, 1));
+            let mut buf = DefaultBuffer::empty(Rect::new(0, 0, 6, 1));
             Text::from("foobar".on_blue()).render(Rect::new(0, 0, 3, 1), &mut buf);
 
-            let mut expected = Buffer::with_lines(["foo   "]);
+            let mut expected = DefaultBuffer::with_lines(["foo   "]);
             expected.set_style(Rect::new(0, 0, 3, 1), Style::new().bg(Color::Blue));
             assert_eq!(buf, expected);
         }

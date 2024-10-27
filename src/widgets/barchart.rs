@@ -452,7 +452,7 @@ impl BarChart<'_> {
                         } else {
                             self.bar_set.empty
                         };
-                        buf[(bars_area.left() + x, bar_y)]
+                        buf[(bars_area.left() + x, bar_y).into()]
                             .set_symbol(symbol)
                             .set_style(bar_style);
                     }
@@ -528,7 +528,7 @@ impl BarChart<'_> {
                     let bar_style = self.bar_style.patch(bar.style);
 
                     for x in 0..self.bar_width {
-                        buf[(bar_x + x, area.top() + j)]
+                        buf[(bar_x + x, area.top() + j).into()]
                             .set_symbol(symbol)
                             .set_style(bar_style);
                     }

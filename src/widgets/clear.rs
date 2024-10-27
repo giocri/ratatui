@@ -42,7 +42,7 @@ impl WidgetRef for Clear {
     fn render_ref(&self, area: Rect, buf: &mut impl Buffer) {
         for x in area.left()..area.right() {
             for y in area.top()..area.bottom() {
-                buf[(x, y)].reset();
+                buf[(x, y).into()].reset();
             }
         }
     }
