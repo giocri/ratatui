@@ -66,7 +66,7 @@ mod tests {
 
     use super::*;
     use crate::{
-        buffer::Buffer,
+        buffer::{Buffer, DefaultBuffer},
         layout::Rect,
         symbols::Marker,
         widgets::{canvas::Canvas, Widget},
@@ -97,7 +97,7 @@ mod tests {
 
     #[test]
     fn draw_low() {
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 80, 40));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 80, 40));
         let canvas = Canvas::default()
             .marker(Marker::Dot)
             .x_bounds([-180.0, 180.0])
@@ -106,7 +106,7 @@ mod tests {
                 context.draw(&Map::default());
             });
         canvas.render(buffer.area, &mut buffer);
-        let expected = Buffer::with_lines([
+        let expected = DefaultBuffer::with_lines([
             "                                                                                ",
             "                   ••••••• •• •• •• •                                           ",
             "            ••••••••••••••       •••      ••••  •••  ••    ••••                 ",
@@ -153,7 +153,7 @@ mod tests {
 
     #[test]
     fn draw_high() {
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 80, 40));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 80, 40));
         let canvas = Canvas::default()
             .marker(Marker::Braille)
             .x_bounds([-180.0, 180.0])
@@ -165,7 +165,7 @@ mod tests {
                 });
             });
         canvas.render(buffer.area, &mut buffer);
-        let expected = Buffer::with_lines([
+        let expected = DefaultBuffer::with_lines([
             "                                                                                ",
             "                  ⢀⣠⠤⠤⠤⠔⢤⣤⡄⠤⡠⣄⠢⠂⢢⠰⣠⡄⣀⡀                      ⣀                   ",
             "            ⢀⣀⡤⣦⠲⢶⣿⣮⣿⡉⣰⢶⢏⡂        ⢀⣟⠁     ⢺⣻⢿⠏   ⠈⠉⠁ ⢀⣀    ⠈⠓⢳⣢⣂⡀               ",

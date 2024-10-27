@@ -323,13 +323,13 @@ impl<'a> Styled for Sparkline<'a> {
 }
 
 impl Widget for Sparkline<'_> {
-    fn render(self, area: Rect, buf: &mut Buffer) {
+    fn render(self, area: Rect, buf: &mut impl Buffer) {
         self.render_ref(area, buf);
     }
 }
 
 impl WidgetRef for Sparkline<'_> {
-    fn render_ref(&self, area: Rect, buf: &mut Buffer) {
+    fn render_ref(&self, area: Rect, buf: &mut impl Buffer) {
         self.block.render_ref(area, buf);
         let inner = self.block.inner_if_some(area);
         self.render_sparkline(inner, buf);
@@ -347,7 +347,7 @@ impl Default for AbsentValueSymbol {
 }
 
 impl Sparkline<'_> {
-    fn render_sparkline(&self, spark_area: Rect, buf: &mut Buffer) {
+    fn render_sparkline(&self, spark_area: Rect, buf: &mut impl Buffer) {
         if spark_area.is_empty() {
             return;
         }
@@ -438,7 +438,7 @@ mod tests {
 
     use super::*;
     use crate::{
-        buffer::Cell,
+        buffer::{Cell, DefaultBuffer},
         style::{Color, Modifier, Stylize},
     };
 
@@ -538,9 +538,9 @@ mod tests {
 
     // Helper function to render a sparkline to a buffer with a given width
     // filled with x symbols to make it easier to assert on the result
-    fn render(widget: Sparkline<'_>, width: u16) -> Buffer {
+    fn render(widget: Sparkline<'_>, width: u16) -> DefaultBuffer {
         let area = Rect::new(0, 0, width, 1);
-        let mut buffer = Buffer::filled(area, Cell::new("x"));
+        let mut buffer = DefaultBuffer::filled(area, Cell::new("x"));
         widget.render(area, &mut buffer);
         buffer
     }
@@ -549,7 +549,7 @@ mod tests {
     fn it_does_not_panic_if_max_is_zero() {
         let widget = Sparkline::default().data([0, 0, 0]);
         let buffer = render(widget, 6);
-        assert_eq!(buffer, Buffer::with_lines(["   xxx"]));
+        assert_eq!(buffer, DefaultBuffer::with_lines(["   xxx"]));
     }
 
     #[test]
@@ -558,23 +558,26 @@ mod tests {
         #[allow(clippy::unnecessary_min_or_max)]
         let widget = Sparkline::default().data([0, 1, 2]).max(0);
         let buffer = render(widget, 6);
-        assert_eq!(buffer, Buffer::with_lines(["   xxx"]));
+        assert_eq!(buffer, DefaultBuffer::with_lines(["   xxx"]));
     }
 
     #[test]
     fn it_draws() {
         let widget = Sparkline::default().data([0, 1, 2, 3, 4, 5, 6, 7, 8]);
         let buffer = render(widget, 12);
-        assert_eq!(buffer, Buffer::with_lines([" ▁▂▃▄▅▆▇█xxx"]));
+        assert_eq!(buffer, DefaultBuffer::with_lines([" ▁▂▃▄▅▆▇█xxx"]));
     }
 
     #[test]
     fn it_draws_double_height() {
         let widget = Sparkline::default().data([0, 1, 2, 3, 4, 5, 6, 7, 8]);
         let area = Rect::new(0, 0, 12, 2);
-        let mut buffer = Buffer::filled(area, Cell::new("x"));
+        let mut buffer = DefaultBuffer::filled(area, Cell::new("x"));
         widget.render(area, &mut buffer);
-        assert_eq!(buffer, Buffer::with_lines(["     ▂▄▆█xxx", " ▂▄▆█████xxx"]));
+        assert_eq!(
+            buffer,
+            DefaultBuffer::with_lines(["     ▂▄▆█xxx", " ▂▄▆█████xxx"])
+        );
     }
 
     #[test]
@@ -583,7 +586,7 @@ mod tests {
             .data([0, 1, 2, 3, 4, 5, 6, 7, 8])
             .direction(RenderDirection::LeftToRight);
         let buffer = render(widget, 12);
-        assert_eq!(buffer, Buffer::with_lines([" ▁▂▃▄▅▆▇█xxx"]));
+        assert_eq!(buffer, DefaultBuffer::with_lines([" ▁▂▃▄▅▆▇█xxx"]));
     }
 
     #[test]
@@ -592,7 +595,7 @@ mod tests {
             .data([0, 1, 2, 3, 4, 5, 6, 7, 8])
             .direction(RenderDirection::RightToLeft);
         let buffer = render(widget, 12);
-        assert_eq!(buffer, Buffer::with_lines(["xxx█▇▆▅▄▃▂▁ "]));
+        assert_eq!(buffer, DefaultBuffer::with_lines(["xxx█▇▆▅▄▃▂▁ "]));
     }
 
     #[test]
@@ -612,7 +615,7 @@ mod tests {
                 Some(8),
             ]);
         let buffer = render(widget, 12);
-        let mut expected = Buffer::with_lines(["█▁▂▃▄▅▆▇█xxx"]);
+        let mut expected = DefaultBuffer::with_lines(["█▁▂▃▄▅▆▇█xxx"]);
         expected.set_style(Rect::new(0, 0, 1, 1), Style::default().fg(Color::Red));
         assert_eq!(buffer, expected);
     }
@@ -634,9 +637,9 @@ mod tests {
                 Some(8),
             ]);
         let area = Rect::new(0, 0, 12, 2);
-        let mut buffer = Buffer::filled(area, Cell::new("x"));
+        let mut buffer = DefaultBuffer::filled(area, Cell::new("x"));
         widget.render(area, &mut buffer);
-        let mut expected = Buffer::with_lines(["█    ▂▄▆█xxx", "█▂▄▆█████xxx"]);
+        let mut expected = DefaultBuffer::with_lines(["█    ▂▄▆█xxx", "█▂▄▆█████xxx"]);
         expected.set_style(Rect::new(0, 0, 1, 2), Style::default().fg(Color::Red));
         assert_eq!(buffer, expected);
     }
@@ -655,7 +658,7 @@ mod tests {
             Some(8),
         ]);
         let buffer = render(widget, 12);
-        let expected = Buffer::with_lines(["*▁▂▃▄▅▆▇█xxx"]);
+        let expected = DefaultBuffer::with_lines(["*▁▂▃▄▅▆▇█xxx"]);
         assert_eq!(buffer, expected);
     }
 
@@ -673,7 +676,7 @@ mod tests {
             SparklineBar::from(Some(8)).style(Some(Style::default().fg(Color::Blue))),
         ]);
         let buffer = render(widget, 12);
-        let mut expected = Buffer::with_lines([" ▁▂▃▄▅▆▇█xxx"]);
+        let mut expected = DefaultBuffer::with_lines([" ▁▂▃▄▅▆▇█xxx"]);
         expected.set_style(Rect::new(0, 0, 3, 1), Style::default().fg(Color::Red));
         expected.set_style(Rect::new(3, 0, 3, 1), Style::default().fg(Color::Green));
         expected.set_style(Rect::new(6, 0, 3, 1), Style::default().fg(Color::Blue));

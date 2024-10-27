@@ -209,7 +209,9 @@ mod tests {
         ExpectedLines: IntoIterator,
         ExpectedLines::Item: Into<crate::text::Line<'expected_line>>,
     {
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 10, 10));
+        use crate::buffer::DefaultBuffer;
+
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 10, 10));
         let canvas = Canvas::default()
             .marker(Marker::Dot)
             .x_bounds([0.0, 10.0])
@@ -217,7 +219,7 @@ mod tests {
             .paint(|context| context.draw(line));
         canvas.render(buffer.area, &mut buffer);
 
-        let mut expected = Buffer::with_lines(expected);
+        let mut expected = DefaultBuffer::with_lines(expected);
         for cell in &mut expected.content {
             if cell.symbol() == "•" {
                 cell.set_style(Style::new().red());

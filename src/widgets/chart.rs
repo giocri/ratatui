@@ -866,7 +866,7 @@ impl<'a> Chart<'a> {
 
     fn render_x_labels(
         &self,
-        buf: &mut Buffer,
+        buf: &mut impl Buffer,
         layout: &ChartLayout,
         chart_area: Rect,
         graph_area: Rect,
@@ -934,7 +934,7 @@ impl<'a> Chart<'a> {
         Rect::new(min_x, y, max_x - min_x, 1)
     }
 
-    fn render_label(buf: &mut Buffer, label: &Line, label_area: Rect, alignment: Alignment) {
+    fn render_label(buf: &mut impl Buffer, label: &Line, label_area: Rect, alignment: Alignment) {
         let label = match alignment {
             Alignment::Left => label.clone().left_aligned(),
             Alignment::Center => label.clone().centered(),
@@ -945,7 +945,7 @@ impl<'a> Chart<'a> {
 
     fn render_y_labels(
         &self,
-        buf: &mut Buffer,
+        buf: &mut impl Buffer,
         layout: &ChartLayout,
         chart_area: Rect,
         graph_area: Rect,
@@ -969,14 +969,14 @@ impl<'a> Chart<'a> {
 }
 
 impl Widget for Chart<'_> {
-    fn render(self, area: Rect, buf: &mut Buffer) {
+    fn render(self, area: Rect, buf: &mut impl Buffer) {
         self.render_ref(area, buf);
     }
 }
 
 impl WidgetRef for Chart<'_> {
     #[allow(clippy::too_many_lines)]
-    fn render_ref(&self, area: Rect, buf: &mut Buffer) {
+    fn render_ref(&self, area: Rect, buf: &mut impl Buffer) {
         buf.set_style(area, self.style);
 
         self.block.render_ref(area, buf);
@@ -1161,7 +1161,10 @@ mod tests {
     use strum::ParseError;
 
     use super::*;
-    use crate::style::{Modifier, Stylize};
+    use crate::{
+        buffer::DefaultBuffer,
+        style::{Modifier, Stylize},
+    };
 
     struct LegendTestCase {
         chart_area: Rect,
@@ -1256,9 +1259,9 @@ mod tests {
         let widget = Chart::default()
             .y_axis(Axis::default().title("xxxxxxxxxxxxxxxx"))
             .x_axis(Axis::default().title("xxxxxxxxxxxxxxxx"));
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 8, 4));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 8, 4));
         widget.render(buffer.area, &mut buffer);
-        assert_eq!(buffer, Buffer::with_lines(vec![" ".repeat(8); 4]));
+        assert_eq!(buffer, DefaultBuffer::with_lines(vec![" ".repeat(8); 4]));
     }
 
     #[test]
@@ -1267,7 +1270,7 @@ mod tests {
         let data_named_2 = Dataset::default().name(""); // must occupy a row in legend, even if name is empty
         let data_unnamed = Dataset::default(); // must not occupy a row in legend
         let widget = Chart::new(vec![data_named_1, data_unnamed, data_named_2]);
-        let buffer = Buffer::empty(Rect::new(0, 0, 50, 25));
+        let buffer = DefaultBuffer::empty(Rect::new(0, 0, 50, 25));
         let layout = widget.layout(buffer.area).unwrap();
 
         assert!(layout.legend_area.is_some());
@@ -1278,7 +1281,7 @@ mod tests {
     fn no_legend_if_no_named_datasets() {
         let dataset = Dataset::default();
         let widget = Chart::new(vec![dataset; 3]);
-        let buffer = Buffer::empty(Rect::new(0, 0, 50, 25));
+        let buffer = DefaultBuffer::empty(Rect::new(0, 0, 50, 25));
         let layout = widget.layout(buffer.area).unwrap();
 
         assert!(layout.legend_area.is_none());
@@ -1291,9 +1294,9 @@ mod tests {
             Dataset::default().name(Line::from("Short name").alignment(Alignment::Right));
         let widget = Chart::new(vec![long_dataset_name, short_dataset])
             .hidden_legend_constraints((100.into(), 100.into()));
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 20, 5));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 20, 5));
         widget.render(buffer.area, &mut buffer);
-        let expected = Buffer::with_lines([
+        let expected = DefaultBuffer::with_lines([
             "    ┌──────────────┐",
             "    │Very long name│",
             "    │    Short name│",
@@ -1308,9 +1311,9 @@ mod tests {
         let chart = Chart::new(vec![Dataset::default().name("Ds1")])
             .legend_position(Some(LegendPosition::TopLeft));
         let area = Rect::new(0, 0, 30, 20);
-        let mut buffer = Buffer::empty(area);
+        let mut buffer = DefaultBuffer::empty(area);
         chart.render(buffer.area, &mut buffer);
-        let expected = Buffer::with_lines([
+        let expected = DefaultBuffer::with_lines([
             "┌───┐                         ",
             "│Ds1│                         ",
             "└───┘                         ",
@@ -1340,9 +1343,9 @@ mod tests {
         let chart = Chart::new(vec![Dataset::default().name("Ds1")])
             .y_axis(Axis::default().title("The title overlap a legend."));
         let area = Rect::new(0, 0, 30, 20);
-        let mut buffer = Buffer::empty(area);
+        let mut buffer = DefaultBuffer::empty(area);
         chart.render(buffer.area, &mut buffer);
-        let expected = Buffer::with_lines([
+        let expected = DefaultBuffer::with_lines([
             "The title overlap a legend.   ",
             "                         ┌───┐",
             "                         │Ds1│",
@@ -1372,9 +1375,9 @@ mod tests {
         let chart = Chart::new(vec![Dataset::default().name("Ds1")])
             .y_axis(Axis::default().title("The title overlap a legend."));
         let area = Rect::new(0, 0, 10, 10);
-        let mut buffer = Buffer::empty(area);
+        let mut buffer = DefaultBuffer::empty(area);
         chart.render(buffer.area, &mut buffer);
-        let expected = Buffer::with_lines([
+        let expected = DefaultBuffer::with_lines([
             "          ",
             "          ",
             "          ",
@@ -1395,7 +1398,7 @@ mod tests {
         let chart = Chart::new(vec![Dataset::default().name(name)])
             .hidden_legend_constraints((Constraint::Percentage(100), Constraint::Percentage(100)));
         let area = Rect::new(0, 0, name.len() as u16 + 2, 3);
-        let mut buffer = Buffer::empty(area);
+        let mut buffer = DefaultBuffer::empty(area);
         for position in [
             LegendPosition::TopLeft,
             LegendPosition::Top,
@@ -1410,7 +1413,7 @@ mod tests {
             buffer.reset();
             chart.render(buffer.area, &mut buffer);
             #[rustfmt::skip]
-            let expected = Buffer::with_lines([
+            let expected =DefaultBuffer::with_lines([
                 "┌────┐",
                 "│Data│",
                 "└────┘",
@@ -1499,14 +1502,16 @@ mod tests {
         Lines: IntoIterator,
         Lines::Item: Into<Line<'line>>,
     {
+        use crate::buffer::DefaultBuffer;
+
         let name = "Data";
         let area = Rect::new(0, 0, name.len() as u16 + 2 + 3, 3 + 3);
-        let mut buffer = Buffer::empty(area);
+        let mut buffer = DefaultBuffer::empty(area);
         let chart = Chart::new(vec![Dataset::default().name(name)])
             .legend_position(legend_position)
             .hidden_legend_constraints((Constraint::Percentage(100), Constraint::Percentage(100)));
         chart.render(buffer.area, &mut buffer);
-        assert_eq!(buffer, Buffer::with_lines(expected));
+        assert_eq!(buffer, DefaultBuffer::with_lines(expected));
     }
 
     #[test]
@@ -1526,9 +1531,9 @@ mod tests {
         .x_axis(Axis::default().bounds([0.0, 10.0]))
         .y_axis(Axis::default().bounds([0.0, 10.0]));
         let area = Rect::new(0, 0, 11, 11);
-        let mut buffer = Buffer::empty(area);
+        let mut buffer = DefaultBuffer::empty(area);
         chart.render(buffer.area, &mut buffer);
-        let expected = Buffer::with_lines([
+        let expected = DefaultBuffer::with_lines([
             "          •",
             "        • •",
             "      • • •",

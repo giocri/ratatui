@@ -122,7 +122,7 @@ impl<'a> Bar<'a> {
     /// using `value_style`. The second part is rendered outside the bar using `bar_style`
     pub(super) fn render_value_with_different_styles(
         &self,
-        buf: &mut Buffer,
+        buf: &mut impl Buffer,
         area: Rect,
         bar_length: usize,
         default_value_style: Style,
@@ -154,7 +154,7 @@ impl<'a> Bar<'a> {
 
     pub(super) fn render_value(
         &self,
-        buf: &mut Buffer,
+        buf: &mut impl Buffer,
         max_width: u16,
         x: u16,
         y: u16,
@@ -181,7 +181,7 @@ impl<'a> Bar<'a> {
 
     pub(super) fn render_label(
         &self,
-        buf: &mut Buffer,
+        buf: &mut impl Buffer,
         max_width: u16,
         x: u16,
         y: u16,

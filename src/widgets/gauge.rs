@@ -149,13 +149,13 @@ impl<'a> Gauge<'a> {
 }
 
 impl Widget for Gauge<'_> {
-    fn render(self, area: Rect, buf: &mut Buffer) {
+    fn render(self, area: Rect, buf: &mut impl Buffer) {
         self.render_ref(area, buf);
     }
 }
 
 impl WidgetRef for Gauge<'_> {
-    fn render_ref(&self, area: Rect, buf: &mut Buffer) {
+    fn render_ref(&self, area: Rect, buf: &mut impl Buffer) {
         buf.set_style(area, self.style);
         self.block.render_ref(area, buf);
         let inner = self.block.inner_if_some(area);
@@ -164,7 +164,7 @@ impl WidgetRef for Gauge<'_> {
 }
 
 impl Gauge<'_> {
-    fn render_gauge(&self, gauge_area: Rect, buf: &mut Buffer) {
+    fn render_gauge(&self, gauge_area: Rect, buf: &mut impl Buffer) {
         if gauge_area.is_empty() {
             return;
         }
@@ -382,13 +382,13 @@ impl<'a> LineGauge<'a> {
 }
 
 impl Widget for LineGauge<'_> {
-    fn render(self, area: Rect, buf: &mut Buffer) {
+    fn render(self, area: Rect, buf: &mut impl Buffer) {
         self.render_ref(area, buf);
     }
 }
 
 impl WidgetRef for LineGauge<'_> {
-    fn render_ref(&self, area: Rect, buf: &mut Buffer) {
+    fn render_ref(&self, area: Rect, buf: &mut impl Buffer) {
         buf.set_style(area, self.style);
         self.block.render_ref(area, buf);
         let gauge_area = self.block.inner_if_some(area);

@@ -2,7 +2,7 @@ use std::io;
 
 use crate::{
     backend::{Backend, ClearType},
-    buffer::{Buffer, Cell},
+    buffer::{Buffer, Cell, DefaultBuffer},
     layout::{Position, Rect, Size},
     CompletedFrame, Frame, TerminalOptions, Viewport,
 };
@@ -61,7 +61,7 @@ where
     backend: B,
     /// Holds the results of the current and previous draw calls. The two are compared at the end
     /// of each draw pass to output the necessary updates to the terminal
-    buffers: [Buffer; 2],
+    buffers: [DefaultBuffer; 2],
     /// Index of the current buffer in the previous array
     current: usize,
     /// Whether the cursor is currently hidden
@@ -179,7 +179,7 @@ where
     }
 
     /// Gets the current buffer as a mutable reference.
-    pub fn current_buffer_mut(&mut self) -> &mut Buffer {
+    pub fn current_buffer_mut(&mut self) -> &mut DefaultBuffer {
         &mut self.buffers[self.current]
     }
 
@@ -578,7 +578,7 @@ where
     /// ```
     pub fn insert_before<F>(&mut self, height: u16, draw_fn: F) -> io::Result<()>
     where
-        F: FnOnce(&mut Buffer),
+        F: FnOnce(&mut DefaultBuffer),
     {
         match self.viewport {
             #[cfg(feature = "scrolling-regions")]
@@ -594,7 +594,7 @@ where
     fn insert_before_no_scrolling_regions(
         &mut self,
         height: u16,
-        draw_fn: impl FnOnce(&mut Buffer),
+        draw_fn: impl FnOnce(&mut DefaultBuffer),
     ) -> io::Result<()> {
         // The approach of this function is to first render all of the lines to insert into a
         // temporary buffer, and then to loop drawing chunks from the buffer to the screen. drawing
@@ -605,7 +605,7 @@ where
             width: self.viewport_area.width,
             height,
         };
-        let mut buffer = Buffer::empty(area);
+        let mut buffer = DefaultBuffer::empty(area);
         draw_fn(&mut buffer);
         let mut buffer = buffer.content.as_slice();
 
@@ -706,7 +706,7 @@ where
             width: self.viewport_area.width,
             height,
         };
-        let mut buffer = Buffer::empty(area);
+        let mut buffer = DefaultBuffer::empty(area);
         draw_fn(&mut buffer);
         let mut buffer = buffer.content.as_slice();
 
@@ -796,8 +796,8 @@ where
         let (to_draw, remainder) = cells.split_at(width * lines_to_draw as usize);
         if lines_to_draw > 0 {
             let area = Rect::new(0, y_offset, width as u16, y_offset + lines_to_draw);
-            let old = Buffer::empty(area);
-            let new = Buffer {
+            let old = DefaultBuffer::empty(area);
+            let new = DefaultBuffer {
                 area,
                 content: to_draw.to_vec(),
             };

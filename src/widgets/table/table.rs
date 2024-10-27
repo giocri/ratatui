@@ -748,13 +748,13 @@ impl<'a> Table<'a> {
 }
 
 impl Widget for Table<'_> {
-    fn render(self, area: Rect, buf: &mut Buffer) {
+    fn render(self, area: Rect, buf: &mut impl Buffer) {
         WidgetRef::render_ref(&self, area, buf);
     }
 }
 
 impl WidgetRef for Table<'_> {
-    fn render_ref(&self, area: Rect, buf: &mut Buffer) {
+    fn render_ref(&self, area: Rect, buf: &mut impl Buffer) {
         let mut state = TableState::default();
         StatefulWidget::render(self, area, buf, &mut state);
     }
@@ -763,7 +763,7 @@ impl WidgetRef for Table<'_> {
 impl StatefulWidget for Table<'_> {
     type State = TableState;
 
-    fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
+    fn render(self, area: Rect, buf: &mut impl Buffer, state: &mut Self::State) {
         StatefulWidget::render(&self, area, buf, state);
     }
 }
@@ -771,7 +771,7 @@ impl StatefulWidget for Table<'_> {
 // Note: remove this when StatefulWidgetRef is stabilized and replace with the blanket impl
 impl StatefulWidget for &Table<'_> {
     type State = TableState;
-    fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
+    fn render(self, area: Rect, buf: &mut impl Buffer, state: &mut Self::State) {
         StatefulWidgetRef::render_ref(self, area, buf, state);
     }
 }
@@ -779,7 +779,7 @@ impl StatefulWidget for &Table<'_> {
 impl StatefulWidgetRef for Table<'_> {
     type State = TableState;
 
-    fn render_ref(&self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
+    fn render_ref(&self, area: Rect, buf: &mut impl Buffer, state: &mut Self::State) {
         buf.set_style(area, self.style);
         self.block.render_ref(area, buf);
         let table_area = self.block.inner_if_some(area);
@@ -847,7 +847,7 @@ impl Table<'_> {
         (header_area, rows_area, footer_area)
     }
 
-    fn render_header(&self, area: Rect, buf: &mut Buffer, column_widths: &[(u16, u16)]) {
+    fn render_header(&self, area: Rect, buf: &mut impl Buffer, column_widths: &[(u16, u16)]) {
         if let Some(ref header) = self.header {
             buf.set_style(area, header.style);
             for ((x, width), cell) in column_widths.iter().zip(header.cells.iter()) {
@@ -856,7 +856,7 @@ impl Table<'_> {
         }
     }
 
-    fn render_footer(&self, area: Rect, buf: &mut Buffer, column_widths: &[(u16, u16)]) {
+    fn render_footer(&self, area: Rect, buf: &mut impl Buffer, column_widths: &[(u16, u16)]) {
         if let Some(ref footer) = self.footer {
             buf.set_style(area, footer.style);
             for ((x, width), cell) in column_widths.iter().zip(footer.cells.iter()) {
@@ -868,7 +868,7 @@ impl Table<'_> {
     fn render_rows(
         &self,
         area: Rect,
-        buf: &mut Buffer,
+        buf: &mut impl Buffer,
         state: &mut TableState,
         selection_width: u16,
         highlight_symbol: &Text<'_>,
@@ -1281,18 +1281,18 @@ mod tests {
 
         use super::*;
         use crate::{
-            buffer::Buffer,
+            buffer::{Buffer, DefaultBuffer},
             layout::{Constraint, Rect},
             widgets::{Row, StatefulWidget, Table, TableState},
         };
 
         #[fixture]
-        fn table_buf() -> Buffer {
-            Buffer::empty(Rect::new(0, 0, 10, 10))
+        fn table_buf() -> DefaultBuffer {
+            DefaultBuffer::empty(Rect::new(0, 0, 10, 10))
         }
 
         #[rstest]
-        fn test_list_state_empty_list(mut table_buf: Buffer) {
+        fn test_list_state_empty_list(mut table_buf: DefaultBuffer) {
             let mut state = TableState::default();
 
             let rows: Vec<Row> = Vec::new();
@@ -1305,7 +1305,7 @@ mod tests {
         }
 
         #[rstest]
-        fn test_list_state_single_item(mut table_buf: Buffer) {
+        fn test_list_state_single_item(mut table_buf: DefaultBuffer) {
             let mut state = TableState::default();
 
             let widths = vec![Constraint::Percentage(100)];
@@ -1359,28 +1359,28 @@ mod tests {
     #[cfg(test)]
     mod render {
         use super::*;
-        use crate::layout::Alignment;
+        use crate::{buffer::DefaultBuffer, layout::Alignment};
 
         #[test]
         fn render_empty_area() {
-            let mut buf = Buffer::empty(Rect::new(0, 0, 15, 3));
+            let mut buf = DefaultBuffer::empty(Rect::new(0, 0, 15, 3));
             let rows = vec![Row::new(vec!["Cell1", "Cell2"])];
             let table = Table::new(rows, vec![Constraint::Length(5); 2]);
             Widget::render(table, Rect::new(0, 0, 0, 0), &mut buf);
-            assert_eq!(buf, Buffer::empty(Rect::new(0, 0, 15, 3)));
+            assert_eq!(buf, DefaultBuffer::empty(Rect::new(0, 0, 15, 3)));
         }
 
         #[test]
         fn render_default() {
-            let mut buf = Buffer::empty(Rect::new(0, 0, 15, 3));
+            let mut buf = DefaultBuffer::empty(Rect::new(0, 0, 15, 3));
             let table = Table::default();
             Widget::render(table, Rect::new(0, 0, 15, 3), &mut buf);
-            assert_eq!(buf, Buffer::empty(Rect::new(0, 0, 15, 3)));
+            assert_eq!(buf, DefaultBuffer::empty(Rect::new(0, 0, 15, 3)));
         }
 
         #[test]
         fn render_with_block() {
-            let mut buf = Buffer::empty(Rect::new(0, 0, 15, 3));
+            let mut buf = DefaultBuffer::empty(Rect::new(0, 0, 15, 3));
             let rows = vec![
                 Row::new(vec!["Cell1", "Cell2"]),
                 Row::new(vec!["Cell3", "Cell4"]),
@@ -1389,7 +1389,7 @@ mod tests {
             let table = Table::new(rows, vec![Constraint::Length(5); 2]).block(block);
             Widget::render(table, Rect::new(0, 0, 15, 3), &mut buf);
             #[rustfmt::skip]
-            let expected = Buffer::with_lines([
+            let expected = DefaultBuffer::with_lines([
                 "┌Block────────┐",
                 "│Cell1 Cell2  │",
                 "└─────────────┘",
@@ -1399,7 +1399,7 @@ mod tests {
 
         #[test]
         fn render_with_header() {
-            let mut buf = Buffer::empty(Rect::new(0, 0, 15, 3));
+            let mut buf = DefaultBuffer::empty(Rect::new(0, 0, 15, 3));
             let header = Row::new(vec!["Head1", "Head2"]);
             let rows = vec![
                 Row::new(vec!["Cell1", "Cell2"]),
@@ -1408,7 +1408,7 @@ mod tests {
             let table = Table::new(rows, [Constraint::Length(5); 2]).header(header);
             Widget::render(table, Rect::new(0, 0, 15, 3), &mut buf);
             #[rustfmt::skip]
-            let expected = Buffer::with_lines([
+            let expected = DefaultBuffer::with_lines([
                 "Head1 Head2    ",
                 "Cell1 Cell2    ",
                 "Cell3 Cell4    ",
@@ -1418,7 +1418,7 @@ mod tests {
 
         #[test]
         fn render_with_footer() {
-            let mut buf = Buffer::empty(Rect::new(0, 0, 15, 3));
+            let mut buf = DefaultBuffer::empty(Rect::new(0, 0, 15, 3));
             let footer = Row::new(vec!["Foot1", "Foot2"]);
             let rows = vec![
                 Row::new(vec!["Cell1", "Cell2"]),
@@ -1427,7 +1427,7 @@ mod tests {
             let table = Table::new(rows, [Constraint::Length(5); 2]).footer(footer);
             Widget::render(table, Rect::new(0, 0, 15, 3), &mut buf);
             #[rustfmt::skip]
-            let expected = Buffer::with_lines([
+            let expected = DefaultBuffer::with_lines([
                 "Cell1 Cell2    ",
                 "Cell3 Cell4    ",
                 "Foot1 Foot2    ",
@@ -1437,7 +1437,7 @@ mod tests {
 
         #[test]
         fn render_with_header_and_footer() {
-            let mut buf = Buffer::empty(Rect::new(0, 0, 15, 3));
+            let mut buf = DefaultBuffer::empty(Rect::new(0, 0, 15, 3));
             let header = Row::new(vec!["Head1", "Head2"]);
             let footer = Row::new(vec!["Foot1", "Foot2"]);
             let rows = vec![Row::new(vec!["Cell1", "Cell2"])];
@@ -1446,7 +1446,7 @@ mod tests {
                 .footer(footer);
             Widget::render(table, Rect::new(0, 0, 15, 3), &mut buf);
             #[rustfmt::skip]
-            let expected = Buffer::with_lines([
+            let expected = DefaultBuffer::with_lines([
                 "Head1 Head2    ",
                 "Cell1 Cell2    ",
                 "Foot1 Foot2    ",
@@ -1456,7 +1456,7 @@ mod tests {
 
         #[test]
         fn render_with_header_margin() {
-            let mut buf = Buffer::empty(Rect::new(0, 0, 15, 3));
+            let mut buf = DefaultBuffer::empty(Rect::new(0, 0, 15, 3));
             let header = Row::new(vec!["Head1", "Head2"]).bottom_margin(1);
             let rows = vec![
                 Row::new(vec!["Cell1", "Cell2"]),
@@ -1465,7 +1465,7 @@ mod tests {
             let table = Table::new(rows, [Constraint::Length(5); 2]).header(header);
             Widget::render(table, Rect::new(0, 0, 15, 3), &mut buf);
             #[rustfmt::skip]
-            let expected = Buffer::with_lines([
+            let expected = DefaultBuffer::with_lines([
                 "Head1 Head2    ",
                 "               ",
                 "Cell1 Cell2    ",
@@ -1475,13 +1475,13 @@ mod tests {
 
         #[test]
         fn render_with_footer_margin() {
-            let mut buf = Buffer::empty(Rect::new(0, 0, 15, 3));
+            let mut buf = DefaultBuffer::empty(Rect::new(0, 0, 15, 3));
             let footer = Row::new(vec!["Foot1", "Foot2"]).top_margin(1);
             let rows = vec![Row::new(vec!["Cell1", "Cell2"])];
             let table = Table::new(rows, [Constraint::Length(5); 2]).footer(footer);
             Widget::render(table, Rect::new(0, 0, 15, 3), &mut buf);
             #[rustfmt::skip]
-            let expected = Buffer::with_lines([
+            let expected = DefaultBuffer::with_lines([
                 "Cell1 Cell2    ",
                 "               ",
                 "Foot1 Foot2    ",
@@ -1491,7 +1491,7 @@ mod tests {
 
         #[test]
         fn render_with_row_margin() {
-            let mut buf = Buffer::empty(Rect::new(0, 0, 15, 3));
+            let mut buf = DefaultBuffer::empty(Rect::new(0, 0, 15, 3));
             let rows = vec![
                 Row::new(vec!["Cell1", "Cell2"]).bottom_margin(1),
                 Row::new(vec!["Cell3", "Cell4"]),
@@ -1499,7 +1499,7 @@ mod tests {
             let table = Table::new(rows, [Constraint::Length(5); 2]);
             Widget::render(table, Rect::new(0, 0, 15, 3), &mut buf);
             #[rustfmt::skip]
-            let expected = Buffer::with_lines([
+            let expected = DefaultBuffer::with_lines([
                 "Cell1 Cell2    ",
                 "               ",
                 "Cell3 Cell4    ",
@@ -1509,7 +1509,7 @@ mod tests {
 
         #[test]
         fn render_with_alignment() {
-            let mut buf = Buffer::empty(Rect::new(0, 0, 10, 3));
+            let mut buf = DefaultBuffer::empty(Rect::new(0, 0, 10, 3));
             let rows = vec![
                 Row::new(vec![Line::from("Left").alignment(Alignment::Left)]),
                 Row::new(vec![Line::from("Center").alignment(Alignment::Center)]),
@@ -1517,13 +1517,13 @@ mod tests {
             ];
             let table = Table::new(rows, [Percentage(100)]);
             Widget::render(table, Rect::new(0, 0, 10, 3), &mut buf);
-            let expected = Buffer::with_lines(["Left      ", "  Center  ", "     Right"]);
+            let expected = DefaultBuffer::with_lines(["Left      ", "  Center  ", "     Right"]);
             assert_eq!(buf, expected);
         }
 
         #[test]
         fn render_with_overflow_does_not_panic() {
-            let mut buf = Buffer::empty(Rect::new(0, 0, 20, 3));
+            let mut buf = DefaultBuffer::empty(Rect::new(0, 0, 20, 3));
             let table = Table::new(Vec::<Row>::new(), [Constraint::Min(20); 1])
                 .header(Row::new([Line::from("").alignment(Alignment::Right)]))
                 .footer(Row::new([Line::from("").alignment(Alignment::Right)]));
@@ -1532,7 +1532,7 @@ mod tests {
 
         #[test]
         fn render_with_selected_column_and_incorrect_width_count_does_not_panic() {
-            let mut buf = Buffer::empty(Rect::new(0, 0, 20, 3));
+            let mut buf = DefaultBuffer::empty(Rect::new(0, 0, 20, 3));
             let table = Table::new(
                 vec![Row::new(vec!["Row1", "Row2", "Row3"])],
                 [Constraint::Length(10); 1],
@@ -1543,7 +1543,7 @@ mod tests {
 
         #[test]
         fn render_with_selected() {
-            let mut buf = Buffer::empty(Rect::new(0, 0, 15, 3));
+            let mut buf = DefaultBuffer::empty(Rect::new(0, 0, 15, 3));
             let rows = vec![
                 Row::new(vec!["Cell1", "Cell2"]),
                 Row::new(vec!["Cell3", "Cell4"]),
@@ -1553,7 +1553,7 @@ mod tests {
                 .highlight_symbol(">>");
             let mut state = TableState::new().with_selected(Some(0));
             StatefulWidget::render(table, Rect::new(0, 0, 15, 3), &mut buf, &mut state);
-            let expected = Buffer::with_lines([
+            let expected = DefaultBuffer::with_lines([
                 ">>Cell1 Cell2  ".red(),
                 "  Cell3 Cell4  ".into(),
                 "               ".into(),
@@ -1563,7 +1563,7 @@ mod tests {
 
         #[test]
         fn render_with_selected_column() {
-            let mut buf = Buffer::empty(Rect::new(0, 0, 15, 3));
+            let mut buf = DefaultBuffer::empty(Rect::new(0, 0, 15, 3));
             let rows = vec![
                 Row::new(vec!["Cell1", "Cell2"]),
                 Row::new(vec!["Cell3", "Cell4"]),
@@ -1573,7 +1573,7 @@ mod tests {
                 .highlight_symbol(">>");
             let mut state = TableState::new().with_selected_column(Some(1));
             StatefulWidget::render(table, Rect::new(0, 0, 15, 3), &mut buf, &mut state);
-            let expected = Buffer::with_lines::<[Line; 3]>([
+            let expected = DefaultBuffer::with_lines::<[Line; 3]>([
                 Line::from(vec![
                     "Cell1".into(),
                     " ".into(),
@@ -1593,7 +1593,7 @@ mod tests {
 
         #[test]
         fn render_with_selected_cell() {
-            let mut buf = Buffer::empty(Rect::new(0, 0, 20, 4));
+            let mut buf = DefaultBuffer::empty(Rect::new(0, 0, 20, 4));
             let rows = vec![
                 Row::new(vec!["Cell1", "Cell2", "Cell3"]),
                 Row::new(vec!["Cell4", "Cell5", "Cell6"]),
@@ -1604,7 +1604,7 @@ mod tests {
                 .cell_highlight_style(Style::new().green());
             let mut state = TableState::new().with_selected_cell((1, 2));
             StatefulWidget::render(table, Rect::new(0, 0, 20, 4), &mut buf, &mut state);
-            let expected = Buffer::with_lines::<[Line; 4]>([
+            let expected = DefaultBuffer::with_lines::<[Line; 4]>([
                 Line::from(vec!["  Cell1 ".into(), "Cell2 ".into(), "Cell3".into()]),
                 Line::from(vec![">>Cell4 Cell5 ".into(), "Cell6".green(), " ".into()]),
                 Line::from(vec!["  Cell7 ".into(), "Cell8 ".into(), "Cell9".into()]),
@@ -1615,7 +1615,7 @@ mod tests {
 
         #[test]
         fn render_with_selected_row_and_column() {
-            let mut buf = Buffer::empty(Rect::new(0, 0, 20, 4));
+            let mut buf = DefaultBuffer::empty(Rect::new(0, 0, 20, 4));
             let rows = vec![
                 Row::new(vec!["Cell1", "Cell2", "Cell3"]),
                 Row::new(vec!["Cell4", "Cell5", "Cell6"]),
@@ -1627,7 +1627,7 @@ mod tests {
                 .column_highlight_style(Style::new().blue());
             let mut state = TableState::new().with_selected(1).with_selected_column(2);
             StatefulWidget::render(table, Rect::new(0, 0, 20, 4), &mut buf, &mut state);
-            let expected = Buffer::with_lines::<[Line; 4]>([
+            let expected = DefaultBuffer::with_lines::<[Line; 4]>([
                 Line::from(vec!["  Cell1 ".into(), "Cell2 ".into(), "Cell3".blue()]),
                 Line::from(vec![">>Cell4 Cell5 ".red(), "Cell6".blue(), " ".red()]),
                 Line::from(vec!["  Cell7 ".into(), "Cell8 ".into(), "Cell9".blue()]),
@@ -1638,7 +1638,7 @@ mod tests {
 
         #[test]
         fn render_with_selected_row_and_column_and_cell() {
-            let mut buf = Buffer::empty(Rect::new(0, 0, 20, 4));
+            let mut buf = DefaultBuffer::empty(Rect::new(0, 0, 20, 4));
             let rows = vec![
                 Row::new(vec!["Cell1", "Cell2", "Cell3"]),
                 Row::new(vec!["Cell4", "Cell5", "Cell6"]),
@@ -1651,7 +1651,7 @@ mod tests {
                 .cell_highlight_style(Style::new().green());
             let mut state = TableState::new().with_selected(1).with_selected_column(2);
             StatefulWidget::render(table, Rect::new(0, 0, 20, 4), &mut buf, &mut state);
-            let expected = Buffer::with_lines::<[Line; 4]>([
+            let expected = DefaultBuffer::with_lines::<[Line; 4]>([
                 Line::from(vec!["  Cell1 ".into(), "Cell2 ".into(), "Cell3".blue()]),
                 Line::from(vec![">>Cell4 Cell5 ".red(), "Cell6".green(), " ".red()]),
                 Line::from(vec!["  Cell7 ".into(), "Cell8 ".into(), "Cell9".blue()]),
@@ -1679,20 +1679,22 @@ mod tests {
             // render 100 rows offset at 50, with a selected row
             let rows = (0..100).map(|i| Row::new([i.to_string()]));
             let table = Table::new(rows, [Constraint::Length(2)]);
-            let mut buf = Buffer::empty(Rect::new(0, 0, 2, 5));
+            let mut buf = DefaultBuffer::empty(Rect::new(0, 0, 2, 5));
             let mut state = TableState::new()
                 .with_offset(50)
                 .with_selected(selected_row.into());
 
             StatefulWidget::render(table.clone(), Rect::new(0, 0, 5, 5), &mut buf, &mut state);
 
-            assert_eq!(buf, Buffer::with_lines(expected_items));
+            assert_eq!(buf, DefaultBuffer::with_lines(expected_items));
             assert_eq!(state.offset, expected_offset);
         }
     }
 
     // test how constraints interact with table column width allocation
     mod column_widths {
+        use crate::buffer::DefaultBuffer;
+
         use super::*;
 
         #[test]
@@ -1904,10 +1906,10 @@ mod tests {
                 .highlight_symbol(">>>")
                 .column_spacing(spacing);
             let area = Rect::new(0, 0, columns, 3);
-            let mut buf = Buffer::empty(area);
+            let mut buf = DefaultBuffer::empty(area);
             let mut state = TableState::default().with_selected(selection);
             StatefulWidget::render(table, area, &mut buf, &mut state);
-            assert_eq!(buf, Buffer::with_lines(expected));
+            assert_eq!(buf, DefaultBuffer::with_lines(expected));
         }
 
         #[test]
@@ -1932,9 +1934,9 @@ mod tests {
                 .widths([5, 5])
                 .column_spacing(0);
             let area = Rect::new(0, 0, 15, 3);
-            let mut buf = Buffer::empty(area);
+            let mut buf = DefaultBuffer::empty(area);
             Widget::render(table, area, &mut buf);
-            let expected = Buffer::with_lines([
+            let expected = DefaultBuffer::with_lines([
                 "ABCDE12345     ", /* As reference, this is what happens when you manually
                                     * specify widths */
                 "               ", // row 2
@@ -2096,11 +2098,11 @@ mod tests {
                 .highlight_symbol(">>>")
                 .column_spacing(1);
             let area = Rect::new(0, 0, 10, 3);
-            let mut buf = Buffer::empty(area);
+            let mut buf = DefaultBuffer::empty(area);
             Widget::render(table, area, &mut buf);
             // highlight_symbol and spacing are prioritized but columns are evenly distributed
             #[rustfmt::skip]
-            let expected = Buffer::with_lines([
+            let expected = DefaultBuffer::with_lines([
                 "   ABCDE 1",
                 "          ",
                 "          ",
@@ -2114,11 +2116,11 @@ mod tests {
                 .highlight_symbol(">>>")
                 .column_spacing(1);
             let area = Rect::new(0, 0, 10, 3);
-            let mut buf = Buffer::empty(area);
+            let mut buf = DefaultBuffer::empty(area);
             Widget::render(table, area, &mut buf);
             // highlight_symbol and spacing are prioritized but columns are evenly distributed
             #[rustfmt::skip]
-            let expected = Buffer::with_lines([
+            let expected = DefaultBuffer::with_lines([
                 "   ABC 123",
                 "          ",
                 "          ",

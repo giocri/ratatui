@@ -45,7 +45,12 @@ impl<'a> BarGroup<'a> {
         self.bars.iter().max_by_key(|v| v.value).map(|v| v.value)
     }
 
-    pub(super) fn render_label(&self, buf: &mut Buffer, area: Rect, default_label_style: Style) {
+    pub(super) fn render_label(
+        &self,
+        buf: &mut impl Buffer,
+        area: Rect,
+        default_label_style: Style,
+    ) {
         if let Some(label) = &self.label {
             // align the label. Necessary to do it this way as we don't want to set the style
             // of the whole area, just the label area

@@ -32,7 +32,7 @@ impl Shape for Circle {
 #[cfg(test)]
 mod tests {
     use crate::{
-        buffer::Buffer,
+        buffer::{Buffer, DefaultBuffer},
         layout::Rect,
         style::Color,
         symbols::Marker,
@@ -44,7 +44,7 @@ mod tests {
 
     #[test]
     fn test_it_draws_a_circle() {
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 10, 5));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 10, 5));
         let canvas = Canvas::default()
             .paint(|ctx| {
                 ctx.draw(&Circle {
@@ -58,7 +58,7 @@ mod tests {
             .x_bounds([-10.0, 10.0])
             .y_bounds([-10.0, 10.0]);
         canvas.render(buffer.area, &mut buffer);
-        let expected = Buffer::with_lines([
+        let expected = DefaultBuffer::with_lines([
             "     ⢀⣠⢤⣀ ",
             "    ⢰⠋  ⠈⣇",
             "    ⠘⣆⡀ ⣠⠇",

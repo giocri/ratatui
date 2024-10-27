@@ -361,13 +361,13 @@ impl<'a> Styled for Tabs<'a> {
 }
 
 impl Widget for Tabs<'_> {
-    fn render(self, area: Rect, buf: &mut Buffer) {
+    fn render(self, area: Rect, buf: &mut impl Buffer) {
         self.render_ref(area, buf);
     }
 }
 
 impl WidgetRef for Tabs<'_> {
-    fn render_ref(&self, area: Rect, buf: &mut Buffer) {
+    fn render_ref(&self, area: Rect, buf: &mut impl Buffer) {
         buf.set_style(area, self.style);
         self.block.render_ref(area, buf);
         let inner = self.block.inner_if_some(area);
@@ -376,7 +376,7 @@ impl WidgetRef for Tabs<'_> {
 }
 
 impl Tabs<'_> {
-    fn render_tabs(&self, tabs_area: Rect, buf: &mut Buffer) {
+    fn render_tabs(&self, tabs_area: Rect, buf: &mut impl Buffer) {
         if tabs_area.is_empty() {
             return;
         }
@@ -444,7 +444,10 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::style::{Color, Stylize};
+    use crate::{
+        buffer::DefaultBuffer,
+        style::{Color, Stylize},
+    };
 
     #[test]
     fn new() {
@@ -522,8 +525,8 @@ mod tests {
     }
 
     #[track_caller]
-    fn test_case(tabs: Tabs, area: Rect, expected: &Buffer) {
-        let mut buffer = Buffer::empty(area);
+    fn test_case(tabs: Tabs, area: Rect, expected: &DefaultBuffer) {
+        let mut buffer = DefaultBuffer::empty(area);
         tabs.render(area, &mut buffer);
         assert_eq!(&buffer, expected);
     }
@@ -531,7 +534,7 @@ mod tests {
     #[test]
     fn render_new() {
         let tabs = Tabs::new(vec!["Tab1", "Tab2", "Tab3", "Tab4"]);
-        let mut expected = Buffer::with_lines([" Tab1 │ Tab2 │ Tab3 │ Tab4    "]);
+        let mut expected = DefaultBuffer::with_lines([" Tab1 │ Tab2 │ Tab3 │ Tab4    "]);
         // first tab selected
         expected.set_style(Rect::new(1, 0, 4, 1), DEFAULT_HIGHLIGHT_STYLE);
         test_case(tabs, Rect::new(0, 0, 30, 1), &expected);
@@ -540,7 +543,7 @@ mod tests {
     #[test]
     fn render_no_padding() {
         let tabs = Tabs::new(vec!["Tab1", "Tab2", "Tab3", "Tab4"]).padding("", "");
-        let mut expected = Buffer::with_lines(["Tab1│Tab2│Tab3│Tab4           "]);
+        let mut expected = DefaultBuffer::with_lines(["Tab1│Tab2│Tab3│Tab4           "]);
         // first tab selected
         expected.set_style(Rect::new(0, 0, 4, 1), DEFAULT_HIGHLIGHT_STYLE);
         test_case(tabs, Rect::new(0, 0, 30, 1), &expected);
@@ -549,7 +552,7 @@ mod tests {
     #[test]
     fn render_more_padding() {
         let tabs = Tabs::new(vec!["Tab1", "Tab2", "Tab3", "Tab4"]).padding("---", "++");
-        let mut expected = Buffer::with_lines(["---Tab1++│---Tab2++│---Tab3++│"]);
+        let mut expected = DefaultBuffer::with_lines(["---Tab1++│---Tab2++│---Tab3++│"]);
         // first tab selected
         expected.set_style(Rect::new(3, 0, 4, 1), DEFAULT_HIGHLIGHT_STYLE);
         test_case(tabs, Rect::new(0, 0, 30, 1), &expected);
@@ -559,7 +562,7 @@ mod tests {
     fn render_with_block() {
         let tabs =
             Tabs::new(vec!["Tab1", "Tab2", "Tab3", "Tab4"]).block(Block::bordered().title("Tabs"));
-        let mut expected = Buffer::with_lines([
+        let mut expected = DefaultBuffer::with_lines([
             "┌Tabs────────────────────────┐",
             "│ Tab1 │ Tab2 │ Tab3 │ Tab4  │",
             "└────────────────────────────┘",
@@ -573,7 +576,7 @@ mod tests {
     fn render_style() {
         let tabs =
             Tabs::new(vec!["Tab1", "Tab2", "Tab3", "Tab4"]).style(Style::default().fg(Color::Red));
-        let mut expected = Buffer::with_lines([" Tab1 │ Tab2 │ Tab3 │ Tab4    ".red()]);
+        let mut expected = DefaultBuffer::with_lines([" Tab1 │ Tab2 │ Tab3 │ Tab4    ".red()]);
         expected.set_style(Rect::new(1, 0, 4, 1), DEFAULT_HIGHLIGHT_STYLE.red());
         test_case(tabs, Rect::new(0, 0, 30, 1), &expected);
     }
@@ -632,7 +635,7 @@ mod tests {
     #[test]
     fn render_divider() {
         let tabs = Tabs::new(vec!["Tab1", "Tab2", "Tab3", "Tab4"]).divider("--");
-        let mut expected = Buffer::with_lines([" Tab1 -- Tab2 -- Tab3 -- Tab4 "]);
+        let mut expected = DefaultBuffer::with_lines([" Tab1 -- Tab2 -- Tab3 -- Tab4 "]);
         // first tab selected
         expected.set_style(Rect::new(1, 0, 4, 1), DEFAULT_HIGHLIGHT_STYLE);
         test_case(tabs, Rect::new(0, 0, 30, 1), &expected);

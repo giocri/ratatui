@@ -33,13 +33,13 @@ use crate::{
 pub struct Clear;
 
 impl Widget for Clear {
-    fn render(self, area: Rect, buf: &mut Buffer) {
+    fn render(self, area: Rect, buf: &mut impl Buffer) {
         self.render_ref(area, buf);
     }
 }
 
 impl WidgetRef for Clear {
-    fn render_ref(&self, area: Rect, buf: &mut Buffer) {
+    fn render_ref(&self, area: Rect, buf: &mut impl Buffer) {
         for x in area.left()..area.right() {
             for y in area.top()..area.bottom() {
                 buf[(x, y)].reset();
@@ -51,13 +51,17 @@ impl WidgetRef for Clear {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{buffer::Buffer, layout::Rect, widgets::Widget};
+    use crate::{
+        buffer::{Buffer, DefaultBuffer},
+        layout::Rect,
+        widgets::Widget,
+    };
     #[test]
     fn render() {
-        let mut buffer = Buffer::with_lines(["xxxxxxxxxxxxxxx"; 7]);
+        let mut buffer = DefaultBuffer::with_lines(["xxxxxxxxxxxxxxx"; 7]);
         let clear = Clear;
         clear.render(Rect::new(1, 2, 3, 4), &mut buffer);
-        let expected = Buffer::with_lines([
+        let expected = DefaultBuffer::with_lines([
             "xxxxxxxxxxxxxxx",
             "xxxxxxxxxxxxxxx",
             "x   xxxxxxxxxxx",

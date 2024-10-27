@@ -746,7 +746,7 @@ impl<F> Widget for Canvas<'_, F>
 where
     F: Fn(&mut Context),
 {
-    fn render(self, area: Rect, buf: &mut Buffer) {
+    fn render(self, area: Rect, buf: &mut impl Buffer) {
         self.render_ref(area, buf);
     }
 }
@@ -755,7 +755,7 @@ impl<F> WidgetRef for Canvas<'_, F>
 where
     F: Fn(&mut Context),
 {
-    fn render_ref(&self, area: Rect, buf: &mut Buffer) {
+    fn render_ref(&self, area: Rect, buf: &mut impl Buffer) {
         self.block.render_ref(area, buf);
         let canvas_area = self.block.inner_if_some(area);
         if canvas_area.is_empty() {
@@ -830,13 +830,13 @@ mod tests {
     use indoc::indoc;
 
     use super::*;
-    use crate::buffer::Cell;
+    use crate::buffer::{Cell, DefaultBuffer};
 
     // helper to test the canvas checks that drawing a vertical and horizontal line
     // results in the expected output
     fn test_marker(marker: Marker, expected: &str) {
         let area = Rect::new(0, 0, 5, 5);
-        let mut buf = Buffer::filled(area, Cell::new("x"));
+        let mut buf = DefaultBuffer::filled(area, Cell::new("x"));
         let horizontal_line = Line {
             x1: 0.0,
             y1: 0.0,
@@ -860,7 +860,7 @@ mod tests {
             .x_bounds([0.0, 10.0])
             .y_bounds([0.0, 10.0])
             .render(area, &mut buf);
-        assert_eq!(buf, Buffer::with_lines(expected.lines()));
+        assert_eq!(buf, DefaultBuffer::with_lines(expected.lines()));
     }
 
     #[test]

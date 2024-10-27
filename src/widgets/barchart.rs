@@ -414,7 +414,7 @@ impl BarChart<'_> {
         }
     }
 
-    fn render_horizontal(&self, buf: &mut Buffer, area: Rect) {
+    fn render_horizontal(&self, buf: &mut impl Buffer, area: Rect) {
         // get the longest label
         let label_size = self
             .data
@@ -493,7 +493,7 @@ impl BarChart<'_> {
         }
     }
 
-    fn render_vertical(&self, buf: &mut Buffer, area: Rect) {
+    fn render_vertical(&self, buf: &mut impl Buffer, area: Rect) {
         let label_info = self.label_info(area.height - 1);
 
         let bars_area = Rect {
@@ -506,7 +506,7 @@ impl BarChart<'_> {
         self.render_labels_and_values(area, buf, label_info, &group_ticks);
     }
 
-    fn render_vertical_bars(&self, area: Rect, buf: &mut Buffer, group_ticks: &[Vec<u64>]) {
+    fn render_vertical_bars(&self, area: Rect, buf: &mut impl Buffer, group_ticks: &[Vec<u64>]) {
         // print all visible bars (without labels and values)
         let mut bar_x = area.left();
         for (ticks_vec, group) in group_ticks.iter().zip(&self.data) {
@@ -557,7 +557,7 @@ impl BarChart<'_> {
     fn render_labels_and_values(
         &self,
         area: Rect,
-        buf: &mut Buffer,
+        buf: &mut impl Buffer,
         label_info: LabelInfo,
         group_ticks: &[Vec<u64>],
     ) {
@@ -597,13 +597,13 @@ impl BarChart<'_> {
 }
 
 impl Widget for BarChart<'_> {
-    fn render(self, area: Rect, buf: &mut Buffer) {
+    fn render(self, area: Rect, buf: &mut impl Buffer) {
         self.render_ref(area, buf);
     }
 }
 
 impl WidgetRef for BarChart<'_> {
-    fn render_ref(&self, area: Rect, buf: &mut Buffer) {
+    fn render_ref(&self, area: Rect, buf: &mut impl Buffer) {
         buf.set_style(area, self.style);
 
         self.block.render_ref(area, buf);
@@ -637,6 +637,7 @@ mod tests {
 
     use super::*;
     use crate::{
+        buffer::DefaultBuffer,
         layout::Alignment,
         style::{Color, Modifier, Stylize},
         text::Span,
@@ -645,19 +646,19 @@ mod tests {
 
     #[test]
     fn default() {
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 10, 3));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 10, 3));
         let widget = BarChart::default();
         widget.render(buffer.area, &mut buffer);
-        assert_eq!(buffer, Buffer::with_lines(["          "; 3]));
+        assert_eq!(buffer, DefaultBuffer::with_lines(["          "; 3]));
     }
 
     #[test]
     fn data() {
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 10, 3));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 10, 3));
         let widget = BarChart::default().data(&[("foo", 1), ("bar", 2)]);
         widget.render(buffer.area, &mut buffer);
         #[rustfmt::skip]
-        let expected = Buffer::with_lines([
+        let expected =DefaultBuffer::with_lines([
             "  █       ",
             "1 2       ",
             "f b       ",
@@ -667,7 +668,7 @@ mod tests {
 
     #[test]
     fn block() {
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 10, 5));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 10, 5));
         let block = Block::bordered()
             .border_type(BorderType::Double)
             .title("Block");
@@ -675,7 +676,7 @@ mod tests {
             .data(&[("foo", 1), ("bar", 2)])
             .block(block);
         widget.render(buffer.area, &mut buffer);
-        let expected = Buffer::with_lines([
+        let expected = DefaultBuffer::with_lines([
             "╔Block═══╗",
             "║  █     ║",
             "║1 2     ║",
@@ -687,11 +688,11 @@ mod tests {
 
     #[test]
     fn max() {
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 10, 3));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 10, 3));
         let without_max = BarChart::default().data(&[("foo", 1), ("bar", 2), ("baz", 100)]);
         without_max.render(buffer.area, &mut buffer);
         #[rustfmt::skip]
-        let expected = Buffer::with_lines([
+        let expected =DefaultBuffer::with_lines([
             "    █     ",
             "    █     ",
             "f b b     ",
@@ -702,7 +703,7 @@ mod tests {
             .max(2);
         with_max.render(buffer.area, &mut buffer);
         #[rustfmt::skip]
-        let expected = Buffer::with_lines([
+        let expected =DefaultBuffer::with_lines([
             "  █ █     ",
             "1 2 █     ",
             "f b b     ",
@@ -712,13 +713,13 @@ mod tests {
 
     #[test]
     fn bar_style() {
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 10, 3));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 10, 3));
         let widget = BarChart::default()
             .data(&[("foo", 1), ("bar", 2)])
             .bar_style(Style::new().red());
         widget.render(buffer.area, &mut buffer);
         #[rustfmt::skip]
-        let mut expected = Buffer::with_lines([
+        let mut expected =DefaultBuffer::with_lines([
             "  █       ",
             "1 2       ",
             "f b       ",
@@ -731,13 +732,13 @@ mod tests {
 
     #[test]
     fn bar_width() {
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 10, 3));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 10, 3));
         let widget = BarChart::default()
             .data(&[("foo", 1), ("bar", 2)])
             .bar_width(3);
         widget.render(buffer.area, &mut buffer);
         #[rustfmt::skip]
-        let expected = Buffer::with_lines([
+        let expected =DefaultBuffer::with_lines([
             "    ███   ",
             "█1█ █2█   ",
             "foo bar   ",
@@ -747,13 +748,13 @@ mod tests {
 
     #[test]
     fn bar_gap() {
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 10, 3));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 10, 3));
         let widget = BarChart::default()
             .data(&[("foo", 1), ("bar", 2)])
             .bar_gap(2);
         widget.render(buffer.area, &mut buffer);
         #[rustfmt::skip]
-        let expected = Buffer::with_lines([
+        let expected =DefaultBuffer::with_lines([
             "   █      ",
             "1  2      ",
             "f  b      ",
@@ -763,13 +764,13 @@ mod tests {
 
     #[test]
     fn bar_set() {
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 10, 3));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 10, 3));
         let widget = BarChart::default()
             .data(&[("foo", 0), ("bar", 1), ("baz", 3)])
             .bar_set(symbols::bar::THREE_LEVELS);
         widget.render(buffer.area, &mut buffer);
         #[rustfmt::skip]
-        let expected = Buffer::with_lines([
+        let expected =DefaultBuffer::with_lines([
             "    █     ",
             "  ▄ 3     ",
             "f b b     ",
@@ -779,7 +780,7 @@ mod tests {
 
     #[test]
     fn bar_set_nine_levels() {
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 18, 3));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 18, 3));
         let widget = BarChart::default()
             .data(&[
                 ("a", 0),
@@ -794,7 +795,7 @@ mod tests {
             ])
             .bar_set(symbols::bar::NINE_LEVELS);
         widget.render(Rect::new(0, 1, 18, 2), &mut buffer);
-        let expected = Buffer::with_lines([
+        let expected = DefaultBuffer::with_lines([
             "                  ",
             "  ▁ ▂ ▃ ▄ ▅ ▆ ▇ 8 ",
             "a b c d e f g h i ",
@@ -804,14 +805,14 @@ mod tests {
 
     #[test]
     fn value_style() {
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 10, 3));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 10, 3));
         let widget = BarChart::default()
             .data(&[("foo", 1), ("bar", 2)])
             .bar_width(3)
             .value_style(Style::new().red());
         widget.render(buffer.area, &mut buffer);
         #[rustfmt::skip]
-        let mut expected = Buffer::with_lines([
+        let mut expected =DefaultBuffer::with_lines([
             "    ███   ",
             "█1█ █2█   ",
             "foo bar   ",
@@ -823,13 +824,13 @@ mod tests {
 
     #[test]
     fn label_style() {
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 10, 3));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 10, 3));
         let widget = BarChart::default()
             .data(&[("foo", 1), ("bar", 2)])
             .label_style(Style::new().red());
         widget.render(buffer.area, &mut buffer);
         #[rustfmt::skip]
-        let mut expected = Buffer::with_lines([
+        let mut expected =DefaultBuffer::with_lines([
             "  █       ",
             "1 2       ",
             "f b       ",
@@ -841,13 +842,13 @@ mod tests {
 
     #[test]
     fn style() {
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 10, 3));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 10, 3));
         let widget = BarChart::default()
             .data(&[("foo", 1), ("bar", 2)])
             .style(Style::new().red());
         widget.render(buffer.area, &mut buffer);
         #[rustfmt::skip]
-        let mut expected = Buffer::with_lines([
+        let mut expected =DefaultBuffer::with_lines([
             "  █       ",
             "1 2       ",
             "f b       ",
@@ -879,10 +880,10 @@ mod tests {
                     .bars(&[Bar::default().value(1), Bar::default().value(2)]),
             );
 
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 3, 3));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 3, 3));
         chart.render(buffer.area, &mut buffer);
         #[rustfmt::skip]
-        let expected = Buffer::with_lines([
+        let expected =DefaultBuffer::with_lines([
             "  █",
             "1 2",
             "G  ",
@@ -911,9 +912,9 @@ mod tests {
     fn test_horizontal_bars() {
         let chart: BarChart<'_> = build_test_barchart();
 
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 5, 8));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 5, 8));
         chart.render(buffer.area, &mut buffer);
-        let expected = Buffer::with_lines([
+        let expected = DefaultBuffer::with_lines([
             "2█   ",
             "3██  ",
             "4███ ",
@@ -930,9 +931,9 @@ mod tests {
     fn test_horizontal_bars_no_space_for_group_label() {
         let chart: BarChart<'_> = build_test_barchart();
 
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 5, 7));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 5, 7));
         chart.render(buffer.area, &mut buffer);
-        let expected = Buffer::with_lines([
+        let expected = DefaultBuffer::with_lines([
             "2█   ",
             "3██  ",
             "4███ ",
@@ -948,10 +949,10 @@ mod tests {
     fn test_horizontal_bars_no_space_for_all_bars() {
         let chart: BarChart<'_> = build_test_barchart();
 
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 5, 5));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 5, 5));
         chart.render(buffer.area, &mut buffer);
         #[rustfmt::skip]
-        let expected = Buffer::with_lines([
+        let expected =DefaultBuffer::with_lines([
             "2█   ",
             "3██  ",
             "4███ ",
@@ -978,10 +979,10 @@ mod tests {
             .value_style(Style::default().italic())
             .bar_gap(0);
 
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 5, 2));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 5, 2));
         chart.render(buffer.area, &mut buffer);
 
-        let mut expected = Buffer::with_lines(["label", "5████"]);
+        let mut expected = DefaultBuffer::with_lines(["label", "5████"]);
 
         // first line has a yellow foreground. first cell contains italic "5"
         expected[(0, 1)].modifier.insert(Modifier::ITALIC);
@@ -1023,10 +1024,10 @@ mod tests {
             .bar_gap(0)
             .data(&[("Jan", 10), ("Feb", 20), ("Mar", 5)]);
 
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 10, 3));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 10, 3));
         chart.render(buffer.area, &mut buffer);
         #[rustfmt::skip]
-        let expected = Buffer::with_lines([
+        let expected =DefaultBuffer::with_lines([
             "Jan 10█   ",
             "Feb 20████",
             "Mar 5     ",
@@ -1046,13 +1047,13 @@ mod tests {
             .direction(Direction::Horizontal)
             .label_style(Style::default().bold().yellow());
 
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 5, 2));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 5, 2));
         chart.render(buffer.area, &mut buffer);
 
         // G1 should have the bold red style
         // bold: because of BarChart::label_style
         // red: is included with the label itself
-        let mut expected = Buffer::with_lines(["2████", "G1   "]);
+        let mut expected = DefaultBuffer::with_lines(["2████", "G1   "]);
         let cell = expected[(0, 1)].set_fg(Color::Red);
         cell.modifier.insert(Modifier::BOLD);
         let cell = expected[(1, 1)].set_fg(Color::Red);
@@ -1073,9 +1074,9 @@ mod tests {
             )
             .data(group.label(Line::from("G2").alignment(Alignment::Center)));
 
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 13, 5));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 13, 5));
         chart.render(buffer.area, &mut buffer);
-        let expected = Buffer::with_lines([
+        let expected = DefaultBuffer::with_lines([
             "    ▂ █     ▂",
             "  ▄ █ █   ▄ █",
             "▆ 2 3 4 ▆ 2 3",
@@ -1093,10 +1094,10 @@ mod tests {
                 .bars(&[Bar::default().value(2), Bar::default().value(5)]),
         );
 
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 3, 3));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 3, 3));
         chart.render(buffer.area, &mut buffer);
         #[rustfmt::skip]
-        let expected = Buffer::with_lines([
+        let expected =DefaultBuffer::with_lines([
             "  █",
             "▆ 5",
             "  G",
@@ -1122,9 +1123,9 @@ mod tests {
         ]);
         let chart = BarChart::default().data(group).bar_width(3).bar_gap(1);
 
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 11, 5));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 11, 5));
         chart.render(buffer.area, &mut buffer);
-        let expected = Buffer::with_lines([
+        let expected = DefaultBuffer::with_lines([
             "    ▆▆▆ ███",
             "    ███ ███",
             "▃▃▃ ███ ███",
@@ -1141,9 +1142,9 @@ mod tests {
             .data(&[("A", 1)])
             .bar_width(0)
             .bar_gap(0);
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 0, 10));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 0, 10));
         chart.render(buffer.area, &mut buffer);
-        assert_eq!(buffer, Buffer::empty(Rect::new(0, 0, 0, 10)));
+        assert_eq!(buffer, DefaultBuffer::empty(Rect::new(0, 0, 0, 10)));
     }
 
     #[test]
@@ -1166,9 +1167,9 @@ mod tests {
             .data(group)
             .bar_set(symbols::bar::NINE_LEVELS);
 
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 17, 1));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 17, 1));
         chart.render(buffer.area, &mut buffer);
-        assert_eq!(buffer, Buffer::with_lines(["  ▁ ▂ ▃ ▄ ▅ ▆ ▇ 8"]));
+        assert_eq!(buffer, DefaultBuffer::with_lines(["  ▁ ▂ ▃ ▄ ▅ ▆ ▇ 8"]));
     }
 
     #[test]
@@ -1191,9 +1192,9 @@ mod tests {
             .data(group)
             .bar_set(symbols::bar::NINE_LEVELS);
 
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 17, 3));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 17, 3));
         chart.render(Rect::new(0, 1, buffer.area.width, 2), &mut buffer);
-        let expected = Buffer::with_lines([
+        let expected = DefaultBuffer::with_lines([
             "                 ",
             "  ▁ ▂ ▃ ▄ ▅ ▆ ▇ 8",
             "a b c d e f g h i",
@@ -1221,9 +1222,9 @@ mod tests {
             .data(group)
             .bar_set(symbols::bar::NINE_LEVELS);
 
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 17, 3));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 17, 3));
         chart.render(buffer.area, &mut buffer);
-        let expected = Buffer::with_lines([
+        let expected = DefaultBuffer::with_lines([
             "  ▁ ▂ ▃ ▄ ▅ ▆ ▇ 8",
             "a b c d e f g h i",
             "      Group      ",
@@ -1251,9 +1252,9 @@ mod tests {
             .bar_width(2)
             .bar_set(symbols::bar::NINE_LEVELS);
 
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 26, 3));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 26, 3));
         chart.render(buffer.area, &mut buffer);
-        let expected = Buffer::with_lines([
+        let expected = DefaultBuffer::with_lines([
             "   1▁ 2▂ 3▃ 4▄ 5▅ 6▆ 7▇ 8█",
             "a  b  c  d  e  f  g  h  i ",
             "          Group           ",
@@ -1281,9 +1282,9 @@ mod tests {
             .data(group)
             .bar_set(symbols::bar::NINE_LEVELS);
 
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 17, 4));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 17, 4));
         chart.render(buffer.area, &mut buffer);
-        let expected = Buffer::with_lines([
+        let expected = DefaultBuffer::with_lines([
             "          ▂ ▄ ▆ █",
             "  ▂ ▄ ▆ 4 5 6 7 8",
             "a b c d e f g h i",
@@ -1310,9 +1311,9 @@ mod tests {
 
         let chart = BarChart::default().data(group);
 
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 17, 3));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 17, 3));
         chart.render(Rect::new(0, 1, buffer.area.width, 2), &mut buffer);
-        let expected = Buffer::with_lines([
+        let expected = DefaultBuffer::with_lines([
             "                 ",
             "  ▁ ▂ ▃ ▄ ▅ ▆ ▇ 8",
             "      Group      ",
@@ -1326,10 +1327,11 @@ mod tests {
 
         let chart = BarChart::default().data(BarGroup::default().bars(&bars));
 
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 59, 1));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 59, 1));
         chart.render(buffer.area, &mut buffer);
-        let expected =
-            Buffer::with_lines(["        ▁ ▁ ▁ ▁ ▂ ▂ ▂ ▃ ▃ ▃ ▃ ▄ ▄ ▄ ▄ ▅ ▅ ▅ ▆ ▆ ▆ ▆ ▇ ▇ ▇ █"]);
+        let expected = DefaultBuffer::with_lines([
+            "        ▁ ▁ ▁ ▁ ▂ ▂ ▂ ▃ ▃ ▃ ▃ ▄ ▄ ▄ ▄ ▅ ▅ ▅ ▆ ▆ ▆ ▆ ▇ ▇ ▇ █",
+        ]);
         assert_eq!(buffer, expected);
     }
 
@@ -1340,9 +1342,9 @@ mod tests {
             .data(&[("a", 1), ("b", 2)])
             .bar_width(2);
 
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 7, 6));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 7, 6));
         chart.render(buffer.area, &mut buffer);
-        let expected = Buffer::with_lines([
+        let expected = DefaultBuffer::with_lines([
             "   ██  ",
             "   ██  ",
             "▄▄ ██  ",

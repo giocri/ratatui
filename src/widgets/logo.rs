@@ -139,7 +139,7 @@ impl RatatuiLogo {
 }
 
 impl Widget for RatatuiLogo {
-    fn render(self, area: Rect, buf: &mut Buffer) {
+    fn render(self, area: Rect, buf: &mut impl Buffer) {
         let logo = self.size.as_str();
         Text::raw(logo).render(area, buf);
     }
@@ -171,6 +171,8 @@ impl Size {
 #[cfg(test)]
 mod tests {
     use rstest::rstest;
+
+    use crate::buffer::DefaultBuffer;
 
     use super::*;
 
@@ -209,11 +211,11 @@ mod tests {
     #[test]
     #[rustfmt::skip]
     fn render_tiny() {
-        let mut buf = Buffer::empty(Rect::new(0, 0, 15, 2));
+        let mut buf =DefaultBuffer::empty(Rect::new(0, 0, 15, 2));
         RatatuiLogo::tiny().render(buf.area, &mut buf);
         assert_eq!(
             buf,
-            Buffer::with_lines([
+           DefaultBuffer::with_lines([
                 "▛▚▗▀▖▜▘▞▚▝▛▐ ▌▌",
                 "▛▚▐▀▌▐ ▛▜ ▌▝▄▘▌",
             ])
@@ -223,11 +225,11 @@ mod tests {
     #[test]
     #[rustfmt::skip]
     fn render_small() {
-        let mut buf = Buffer::empty(Rect::new(0, 0, 27, 2));
+        let mut buf =DefaultBuffer::empty(Rect::new(0, 0, 27, 2));
         RatatuiLogo::small().render(buf.area, &mut buf);
         assert_eq!(
             buf,
-            Buffer::with_lines([
+           DefaultBuffer::with_lines([
                 "█▀▀▄ ▄▀▀▄▝▜▛▘▄▀▀▄▝▜▛▘█  █ █",
                 "█▀▀▄ █▀▀█ ▐▌ █▀▀█ ▐▌ ▀▄▄▀ █",
             ])

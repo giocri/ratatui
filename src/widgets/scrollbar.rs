@@ -499,7 +499,7 @@ impl ScrollbarState {
 impl<'a> StatefulWidget for Scrollbar<'a> {
     type State = ScrollbarState;
 
-    fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
+    fn render(self, area: Rect, buf: &mut impl Buffer, state: &mut Self::State) {
         if state.content_length == 0 || self.track_length_excluding_arrow_heads(area) == 0 {
             return;
         }
@@ -700,10 +700,12 @@ mod tests {
         #[case] content_length: usize,
         scrollbar_no_arrows: Scrollbar,
     ) {
-        let mut buffer = Buffer::empty(Rect::new(0, 0, expected.width() as u16, 1));
+        use crate::buffer::DefaultBuffer;
+
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, expected.width() as u16, 1));
         let mut state = ScrollbarState::new(content_length).position(position);
         scrollbar_no_arrows.render(buffer.area, &mut buffer, &mut state);
-        assert_eq!(buffer, Buffer::with_lines([expected]));
+        assert_eq!(buffer, DefaultBuffer::with_lines([expected]));
     }
 
     #[rstest]
@@ -723,10 +725,12 @@ mod tests {
         #[case] content_length: usize,
         scrollbar_no_arrows: Scrollbar,
     ) {
-        let mut buffer = Buffer::empty(Rect::new(0, 0, expected.width() as u16, 1));
+        use crate::buffer::DefaultBuffer;
+
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, expected.width() as u16, 1));
         let mut state = ScrollbarState::new(content_length).position(position);
         scrollbar_no_arrows.render(buffer.area, &mut buffer, &mut state);
-        assert_eq!(buffer, Buffer::with_lines([expected]));
+        assert_eq!(buffer, DefaultBuffer::with_lines([expected]));
     }
 
     #[rstest]
@@ -737,11 +741,13 @@ mod tests {
         #[case] content_length: usize,
         scrollbar_no_arrows: Scrollbar,
     ) {
+        use crate::buffer::DefaultBuffer;
+
         let size = expected.width();
-        let mut buffer = Buffer::empty(Rect::new(0, 0, size as u16, 1));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, size as u16, 1));
         let mut state = ScrollbarState::new(content_length).position(position);
         scrollbar_no_arrows.render(buffer.area, &mut buffer, &mut state);
-        assert_eq!(buffer, Buffer::with_lines([expected]));
+        assert_eq!(buffer, DefaultBuffer::with_lines([expected]));
     }
 
     #[rstest]
@@ -754,11 +760,13 @@ mod tests {
         #[case] content_length: usize,
         scrollbar_no_arrows: Scrollbar,
     ) {
+        use crate::buffer::DefaultBuffer;
+
         let size = expected.width();
-        let mut buffer = Buffer::empty(Rect::new(0, 0, size as u16, 1));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, size as u16, 1));
         let mut state = ScrollbarState::new(content_length).position(position);
         scrollbar_no_arrows.render(buffer.area, &mut buffer, &mut state);
-        assert_eq!(buffer, Buffer::with_lines([expected]));
+        assert_eq!(buffer, DefaultBuffer::with_lines([expected]));
     }
 
     #[rstest]
@@ -770,11 +778,13 @@ mod tests {
         #[case] content_length: usize,
         scrollbar_no_arrows: Scrollbar,
     ) {
+        use crate::buffer::DefaultBuffer;
+
         let size = expected.width();
-        let mut buffer = Buffer::empty(Rect::new(0, 0, size as u16, 1));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, size as u16, 1));
         let mut state = ScrollbarState::new(content_length).position(position);
         scrollbar_no_arrows.render(buffer.area, &mut buffer, &mut state);
-        assert_eq!(buffer, Buffer::with_lines([expected]));
+        assert_eq!(buffer, DefaultBuffer::with_lines([expected]));
     }
 
     #[rstest]
@@ -794,14 +804,16 @@ mod tests {
         #[case] position: usize,
         #[case] content_length: usize,
     ) {
+        use crate::buffer::DefaultBuffer;
+
         let size = expected.width() as u16;
-        let mut buffer = Buffer::empty(Rect::new(0, 0, size, 1));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, size, 1));
         let mut state = ScrollbarState::new(content_length).position(position);
         Scrollbar::new(ScrollbarOrientation::HorizontalBottom)
             .begin_symbol(None)
             .end_symbol(None)
             .render(buffer.area, &mut buffer, &mut state);
-        assert_eq!(buffer, Buffer::with_lines([expected]));
+        assert_eq!(buffer, DefaultBuffer::with_lines([expected]));
     }
 
     #[rstest]
@@ -821,15 +833,17 @@ mod tests {
         #[case] position: usize,
         #[case] content_length: usize,
     ) {
+        use crate::buffer::DefaultBuffer;
+
         let size = expected.width() as u16;
-        let mut buffer = Buffer::empty(Rect::new(0, 0, size, 1));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, size, 1));
         let mut state = ScrollbarState::new(content_length).position(position);
         Scrollbar::new(ScrollbarOrientation::HorizontalBottom)
             .track_symbol(None)
             .begin_symbol(None)
             .end_symbol(None)
             .render(buffer.area, &mut buffer, &mut state);
-        assert_eq!(buffer, Buffer::with_lines([expected]));
+        assert_eq!(buffer, DefaultBuffer::with_lines([expected]));
     }
 
     #[rstest]
@@ -849,8 +863,10 @@ mod tests {
         #[case] position: usize,
         #[case] content_length: usize,
     ) {
+        use crate::buffer::DefaultBuffer;
+
         let size = expected.width() as u16;
-        let mut buffer = Buffer::empty(Rect::new(0, 0, size, 1));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, size, 1));
         let width = buffer.area.width as usize;
         let s = "";
         Text::from(format!("{s:-^width$}")).render(buffer.area, &mut buffer);
@@ -860,7 +876,7 @@ mod tests {
             .begin_symbol(None)
             .end_symbol(None)
             .render(buffer.area, &mut buffer, &mut state);
-        assert_eq!(buffer, Buffer::with_lines([expected]));
+        assert_eq!(buffer, DefaultBuffer::with_lines([expected]));
     }
 
     #[rstest]
@@ -882,8 +898,10 @@ mod tests {
         #[case] position: usize,
         #[case] content_length: usize,
     ) {
+        use crate::buffer::DefaultBuffer;
+
         let size = expected.width() as u16;
-        let mut buffer = Buffer::empty(Rect::new(0, 0, size, 1));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, size, 1));
         let mut state = ScrollbarState::new(content_length).position(position);
         Scrollbar::new(ScrollbarOrientation::HorizontalTop)
             .begin_symbol(Some("<"))
@@ -891,7 +909,7 @@ mod tests {
             .track_symbol(Some("-"))
             .thumb_symbol("#")
             .render(buffer.area, &mut buffer, &mut state);
-        assert_eq!(buffer, Buffer::with_lines([expected]));
+        assert_eq!(buffer, DefaultBuffer::with_lines([expected]));
     }
 
     #[rstest]
@@ -911,15 +929,17 @@ mod tests {
         #[case] position: usize,
         #[case] content_length: usize,
     ) {
+        use crate::buffer::DefaultBuffer;
+
         let size = expected.width() as u16;
-        let mut buffer = Buffer::empty(Rect::new(0, 0, size, 2));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, size, 2));
         let mut state = ScrollbarState::new(content_length).position(position);
         Scrollbar::new(ScrollbarOrientation::HorizontalBottom)
             .begin_symbol(None)
             .end_symbol(None)
             .render(buffer.area, &mut buffer, &mut state);
         let empty_string = " ".repeat(size as usize);
-        assert_eq!(buffer, Buffer::with_lines([&empty_string, expected]));
+        assert_eq!(buffer, DefaultBuffer::with_lines([&empty_string, expected]));
     }
 
     #[rstest]
@@ -939,15 +959,17 @@ mod tests {
         #[case] position: usize,
         #[case] content_length: usize,
     ) {
+        use crate::buffer::DefaultBuffer;
+
         let size = expected.width() as u16;
-        let mut buffer = Buffer::empty(Rect::new(0, 0, size, 2));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, size, 2));
         let mut state = ScrollbarState::new(content_length).position(position);
         Scrollbar::new(ScrollbarOrientation::HorizontalTop)
             .begin_symbol(None)
             .end_symbol(None)
             .render(buffer.area, &mut buffer, &mut state);
         let empty_string = " ".repeat(size as usize);
-        assert_eq!(buffer, Buffer::with_lines([expected, &empty_string]));
+        assert_eq!(buffer, DefaultBuffer::with_lines([expected, &empty_string]));
     }
 
     #[rstest]
@@ -967,8 +989,10 @@ mod tests {
         #[case] position: usize,
         #[case] content_length: usize,
     ) {
+        use crate::buffer::DefaultBuffer;
+
         let size = expected.width() as u16;
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 5, size));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 5, size));
         let mut state = ScrollbarState::new(content_length).position(position);
         Scrollbar::new(ScrollbarOrientation::VerticalLeft)
             .begin_symbol(Some("<"))
@@ -977,7 +1001,7 @@ mod tests {
             .thumb_symbol("#")
             .render(buffer.area, &mut buffer, &mut state);
         let bar = expected.chars().map(|c| format!("{c}    "));
-        assert_eq!(buffer, Buffer::with_lines(bar));
+        assert_eq!(buffer, DefaultBuffer::with_lines(bar));
     }
 
     #[rstest]
@@ -997,8 +1021,10 @@ mod tests {
         #[case] position: usize,
         #[case] content_length: usize,
     ) {
+        use crate::buffer::DefaultBuffer;
+
         let size = expected.width() as u16;
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 5, size));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 5, size));
         let mut state = ScrollbarState::new(content_length).position(position);
         Scrollbar::new(ScrollbarOrientation::VerticalRight)
             .begin_symbol(Some("<"))
@@ -1007,7 +1033,7 @@ mod tests {
             .thumb_symbol("#")
             .render(buffer.area, &mut buffer, &mut state);
         let bar = expected.chars().map(|c| format!("    {c}"));
-        assert_eq!(buffer, Buffer::with_lines(bar));
+        assert_eq!(buffer, DefaultBuffer::with_lines(bar));
     }
 
     #[rstest]
@@ -1028,13 +1054,15 @@ mod tests {
         #[case] content_length: usize,
         scrollbar_no_arrows: Scrollbar,
     ) {
+        use crate::buffer::DefaultBuffer;
+
         let size = expected.width() as u16;
-        let mut buffer = Buffer::empty(Rect::new(0, 0, size, 1));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, size, 1));
         let mut state = ScrollbarState::new(content_length)
             .position(position)
             .viewport_content_length(2);
         scrollbar_no_arrows.render(buffer.area, &mut buffer, &mut state);
-        assert_eq!(buffer, Buffer::with_lines([expected]));
+        assert_eq!(buffer, DefaultBuffer::with_lines([expected]));
     }
 
     /// Fixes <https://github.com/ratatui/ratatui/pull/959> which was a bug that would not
@@ -1057,12 +1085,14 @@ mod tests {
         #[case] content_length: usize,
         scrollbar_no_arrows: Scrollbar,
     ) {
+        use crate::buffer::DefaultBuffer;
+
         let size = expected.width() as u16;
-        let mut buffer = Buffer::empty(Rect::new(0, 0, size, 1));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, size, 1));
         let mut state = ScrollbarState::new(content_length)
             .position(position)
             .viewport_content_length(2);
         scrollbar_no_arrows.render(buffer.area, &mut buffer, &mut state);
-        assert_eq!(buffer, Buffer::with_lines([expected]));
+        assert_eq!(buffer, DefaultBuffer::with_lines([expected]));
     }
 }

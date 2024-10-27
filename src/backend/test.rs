@@ -10,7 +10,7 @@ use unicode_width::UnicodeWidthStr;
 
 use crate::{
     backend::{Backend, ClearType, WindowSize},
-    buffer::{Buffer, Cell},
+    buffer::{Buffer, Cell, DefaultBuffer},
     layout::{Position, Rect, Size},
 };
 
@@ -34,8 +34,8 @@ use crate::{
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TestBackend {
-    buffer: Buffer,
-    scrollback: Buffer,
+    buffer: DefaultBuffer,
+    scrollback: DefaultBuffer,
     cursor: bool,
     pos: (u16, u16),
 }
@@ -46,7 +46,7 @@ pub struct TestBackend {
 /// It iterates through the buffer content and appends each cell's symbol to the view string.
 /// If a cell is hidden by a multi-width symbol, it is added to the overwritten vector and
 /// displayed at the end of the line.
-fn buffer_view(buffer: &Buffer) -> String {
+fn buffer_view(buffer: &DefaultBuffer) -> String {
     let mut view = String::with_capacity(buffer.content.len() + buffer.area.height as usize * 3);
     for cells in buffer.content.chunks(buffer.area.width as usize) {
         let mut overwritten = vec![];
@@ -89,8 +89,8 @@ impl TestBackend {
         Lines: IntoIterator,
         Lines::Item: Into<crate::text::Line<'line>>,
     {
-        let buffer = Buffer::with_lines(lines);
-        let scrollback = Buffer::empty(Rect {
+        let buffer = DefaultBuffer::with_lines(lines);
+        let scrollback = DefaultBuffer::empty(Rect {
             width: buffer.area.width,
             ..Rect::ZERO
         });
@@ -103,7 +103,7 @@ impl TestBackend {
     }
 
     /// Returns a reference to the internal buffer of the `TestBackend`.
-    pub const fn buffer(&self) -> &Buffer {
+    pub const fn buffer(&self) -> &DefaultBuffer {
         &self.buffer
     }
 
@@ -120,7 +120,7 @@ impl TestBackend {
     /// The scrollback buffer has a maximum height of [`u16::MAX`]. If lines are appended to the
     /// bottom of the scrollback buffer when it is at its maximum height, a corresponding number of
     /// lines will be removed from the top.
-    pub const fn scrollback(&self) -> &Buffer {
+    pub const fn scrollback(&self) -> &DefaultBuffer {
         &self.scrollback
     }
 
@@ -142,7 +142,7 @@ impl TestBackend {
     /// differences between the expected and actual buffers.
     #[allow(deprecated)]
     #[track_caller]
-    pub fn assert_buffer(&self, expected: &Buffer) {
+    pub fn assert_buffer(&self, expected: &DefaultBuffer) {
         // TODO: use assert_eq!()
         crate::assert_buffer_eq!(&self.buffer, expected);
     }
@@ -156,7 +156,7 @@ impl TestBackend {
     /// When they are not equal, a panic occurs with a detailed error message showing the
     /// differences between the expected and actual buffers.
     #[track_caller]
-    pub fn assert_scrollback(&self, expected: &Buffer) {
+    pub fn assert_scrollback(&self, expected: &DefaultBuffer) {
         assert_eq!(&self.scrollback, expected);
     }
 
@@ -167,7 +167,7 @@ impl TestBackend {
     /// When the scrollback buffer is not equal, a panic occurs with a detailed error message
     /// showing the differences between the expected and actual buffers.
     pub fn assert_scrollback_empty(&self) {
-        let expected = Buffer {
+        let expected = DefaultBuffer {
             area: Rect {
                 width: self.scrollback.area.width,
                 ..Rect::ZERO
@@ -191,7 +191,7 @@ impl TestBackend {
         Lines: IntoIterator,
         Lines::Item: Into<crate::text::Line<'line>>,
     {
-        self.assert_buffer(&Buffer::with_lines(expected));
+        self.assert_buffer(&DefaultBuffer::with_lines(expected));
     }
 
     /// Asserts that the `TestBackend`'s scrollback buffer is equal to the expected lines.
@@ -208,7 +208,7 @@ impl TestBackend {
         Lines: IntoIterator,
         Lines::Item: Into<crate::text::Line<'line>>,
     {
-        self.assert_scrollback(&Buffer::with_lines(expected));
+        self.assert_scrollback(&DefaultBuffer::with_lines(expected));
     }
 
     /// Asserts that the `TestBackend`'s cursor position is equal to the expected one.
@@ -441,16 +441,16 @@ impl Backend for TestBackend {
 /// Append the provided cells to the bottom of a scrollback buffer. The number of cells must be a
 /// multiple of the buffer's width. If the scrollback buffer ends up larger than 65535 lines tall,
 /// then lines will be removed from the top to get it down to size.
-fn append_to_scrollback(scrollback: &mut Buffer, cells: impl IntoIterator<Item = Cell>) {
-    scrollback.content.extend(cells);
-    let width = scrollback.area.width as usize;
-    let new_height = (scrollback.content.len() / width).min(u16::MAX as usize);
+fn append_to_scrollback(scrollback: &mut impl Buffer, cells: impl IntoIterator<Item = Cell>) {
+    scrollback.content().extend(cells);
+    let width = scrollback.area().width as usize;
+    let new_height = (scrollback.content().len() / width).min(u16::MAX as usize);
     let keep_from = scrollback
-        .content
+        .content()
         .len()
         .saturating_sub(width * u16::MAX as usize);
-    scrollback.content.drain(0..keep_from);
-    scrollback.area.height = new_height as u16;
+    scrollback.content().drain(0..keep_from);
+    scrollback.area().height = new_height as u16;
 }
 
 #[cfg(test)]
@@ -948,11 +948,11 @@ mod tests {
         //     backend.assert_scrollback_lines(lines);
         // but there's some truncation happening in Buffer::with_lines that needs to be fixed
         assert_eq!(
-            Buffer {
+            DefaultBuffer {
                 area: Rect::new(0, 0, 10, 5),
                 content: backend.scrollback.content[0..10 * 5].to_vec(),
             },
-            Buffer::with_lines([
+            DefaultBuffer::with_lines([
                 "         6",
                 "         7",
                 "         8",
@@ -963,11 +963,11 @@ mod tests {
         );
 
         assert_eq!(
-            Buffer {
+            DefaultBuffer {
                 area: Rect::new(0, 0, 10, 5),
                 content: backend.scrollback.content[10 * 65530..10 * 65535].to_vec(),
             },
-            Buffer::with_lines([
+            DefaultBuffer::with_lines([
                 "     65536",
                 "     65537",
                 "     65538",

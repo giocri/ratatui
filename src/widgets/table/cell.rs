@@ -161,7 +161,7 @@ impl<'a> Cell<'a> {
 }
 
 impl Cell<'_> {
-    pub(crate) fn render(&self, area: Rect, buf: &mut Buffer) {
+    pub(crate) fn render(&self, area: Rect, buf: &mut impl Buffer) {
         buf.set_style(area, self.style);
         self.content.render_ref(area, buf);
     }

@@ -1412,8 +1412,11 @@ mod tests {
         use rstest::rstest;
 
         use crate::{
-            buffer::Buffer,
-            layout::{Constraint, Constraint::*, Direction, Flex, Layout, Rect},
+            buffer::{Buffer, DefaultBuffer},
+            layout::{
+                Constraint::{self, *},
+                Direction, Flex, Layout, Rect,
+            },
             widgets::{Paragraph, Widget},
         };
 
@@ -1433,7 +1436,7 @@ mod tests {
                 .constraints(constraints)
                 .flex(flex)
                 .split(area);
-            let mut buffer = Buffer::empty(area);
+            let mut buffer = DefaultBuffer::empty(area);
             for (c, &area) in ('a'..='z').take(constraints.len()).zip(layout.iter()) {
                 let s = c.to_string().repeat(area.width as usize);
                 Paragraph::new(s).render(area, &mut buffer);

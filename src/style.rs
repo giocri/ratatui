@@ -637,6 +637,8 @@ impl From<(Color, Color, Modifier, Modifier)> for Style {
 mod tests {
     use rstest::rstest;
 
+    use crate::buffer::DefaultBuffer;
+
     use super::*;
 
     #[rstest]
@@ -696,7 +698,7 @@ mod tests {
             Modifier::CROSSED_OUT,
         ];
 
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 1, 1));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 1, 1));
 
         for m in mods {
             buffer[(0, 0)].set_style(Style::reset());

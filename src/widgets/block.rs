@@ -693,14 +693,14 @@ impl BorderType {
 }
 
 impl Widget for Block<'_> {
-    fn render(self, area: Rect, buf: &mut Buffer) {
+    fn render(self, area: Rect, buf: &mut impl Buffer) {
         self.render_ref(area, buf);
     }
 }
 
 impl WidgetRef for Block<'_> {
-    fn render_ref(&self, area: Rect, buf: &mut Buffer) {
-        let area = area.intersection(buf.area);
+    fn render_ref(&self, area: Rect, buf: &mut impl Buffer) {
+        let area = area.intersection(buf.area().clone());
         if area.is_empty() {
             return;
         }
@@ -711,7 +711,7 @@ impl WidgetRef for Block<'_> {
 }
 
 impl Block<'_> {
-    fn render_borders(&self, area: Rect, buf: &mut Buffer) {
+    fn render_borders(&self, area: Rect, buf: &mut impl Buffer) {
         self.render_left_side(area, buf);
         self.render_top_side(area, buf);
         self.render_right_side(area, buf);
@@ -723,19 +723,19 @@ impl Block<'_> {
         self.render_top_left_corner(buf, area);
     }
 
-    fn render_titles(&self, area: Rect, buf: &mut Buffer) {
+    fn render_titles(&self, area: Rect, buf: &mut impl Buffer) {
         self.render_title_position(Position::Top, area, buf);
         self.render_title_position(Position::Bottom, area, buf);
     }
 
-    fn render_title_position(&self, position: Position, area: Rect, buf: &mut Buffer) {
+    fn render_title_position(&self, position: Position, area: Rect, buf: &mut impl Buffer) {
         // NOTE: the order in which these functions are called defines the overlapping behavior
         self.render_right_titles(position, area, buf);
         self.render_center_titles(position, area, buf);
         self.render_left_titles(position, area, buf);
     }
 
-    fn render_left_side(&self, area: Rect, buf: &mut Buffer) {
+    fn render_left_side(&self, area: Rect, buf: &mut impl Buffer) {
         if self.borders.contains(Borders::LEFT) {
             for y in area.top()..area.bottom() {
                 buf[(area.left(), y)]
@@ -745,7 +745,7 @@ impl Block<'_> {
         }
     }
 
-    fn render_top_side(&self, area: Rect, buf: &mut Buffer) {
+    fn render_top_side(&self, area: Rect, buf: &mut impl Buffer) {
         if self.borders.contains(Borders::TOP) {
             for x in area.left()..area.right() {
                 buf[(x, area.top())]
@@ -755,7 +755,7 @@ impl Block<'_> {
         }
     }
 
-    fn render_right_side(&self, area: Rect, buf: &mut Buffer) {
+    fn render_right_side(&self, area: Rect, buf: &mut impl Buffer) {
         if self.borders.contains(Borders::RIGHT) {
             let x = area.right() - 1;
             for y in area.top()..area.bottom() {
@@ -766,7 +766,7 @@ impl Block<'_> {
         }
     }
 
-    fn render_bottom_side(&self, area: Rect, buf: &mut Buffer) {
+    fn render_bottom_side(&self, area: Rect, buf: &mut impl Buffer) {
         if self.borders.contains(Borders::BOTTOM) {
             let y = area.bottom() - 1;
             for x in area.left()..area.right() {
@@ -777,7 +777,7 @@ impl Block<'_> {
         }
     }
 
-    fn render_bottom_right_corner(&self, buf: &mut Buffer, area: Rect) {
+    fn render_bottom_right_corner(&self, buf: &mut impl Buffer, area: Rect) {
         if self.borders.contains(Borders::RIGHT | Borders::BOTTOM) {
             buf[(area.right() - 1, area.bottom() - 1)]
                 .set_symbol(self.border_set.bottom_right)
@@ -785,7 +785,7 @@ impl Block<'_> {
         }
     }
 
-    fn render_top_right_corner(&self, buf: &mut Buffer, area: Rect) {
+    fn render_top_right_corner(&self, buf: &mut impl Buffer, area: Rect) {
         if self.borders.contains(Borders::RIGHT | Borders::TOP) {
             buf[(area.right() - 1, area.top())]
                 .set_symbol(self.border_set.top_right)
@@ -793,7 +793,7 @@ impl Block<'_> {
         }
     }
 
-    fn render_bottom_left_corner(&self, buf: &mut Buffer, area: Rect) {
+    fn render_bottom_left_corner(&self, buf: &mut impl Buffer, area: Rect) {
         if self.borders.contains(Borders::LEFT | Borders::BOTTOM) {
             buf[(area.left(), area.bottom() - 1)]
                 .set_symbol(self.border_set.bottom_left)
@@ -801,7 +801,7 @@ impl Block<'_> {
         }
     }
 
-    fn render_top_left_corner(&self, buf: &mut Buffer, area: Rect) {
+    fn render_top_left_corner(&self, buf: &mut impl Buffer, area: Rect) {
         if self.borders.contains(Borders::LEFT | Borders::TOP) {
             buf[(area.left(), area.top())]
                 .set_symbol(self.border_set.top_left)
@@ -816,7 +816,7 @@ impl Block<'_> {
     /// the left side of that leftmost that is cut off. This is due to the line being truncated
     /// incorrectly. See <https://github.com/ratatui/ratatui/issues/932>
     #[allow(clippy::similar_names)]
-    fn render_right_titles(&self, position: Position, area: Rect, buf: &mut Buffer) {
+    fn render_right_titles(&self, position: Position, area: Rect, buf: &mut impl Buffer) {
         let titles = self.filtered_titles(position, Alignment::Right);
         let mut titles_area = self.titles_area(area, position);
 
@@ -851,7 +851,7 @@ impl Block<'_> {
     /// ideal and should be fixed in the future to align the titles to the center of the block and
     /// truncate both sides of the titles if the block is too small to fit all titles.
     #[allow(clippy::similar_names)]
-    fn render_center_titles(&self, position: Position, area: Rect, buf: &mut Buffer) {
+    fn render_center_titles(&self, position: Position, area: Rect, buf: &mut impl Buffer) {
         let titles = self
             .filtered_titles(position, Alignment::Center)
             .collect_vec();
@@ -886,7 +886,7 @@ impl Block<'_> {
 
     /// Render titles aligned to the left of the block
     #[allow(clippy::similar_names)]
-    fn render_left_titles(&self, position: Position, area: Rect, buf: &mut Buffer) {
+    fn render_left_titles(&self, position: Position, area: Rect, buf: &mut impl Buffer) {
         let titles = self.filtered_titles(position, Alignment::Left);
         let mut titles_area = self.titles_area(area, position);
         for title in titles {
@@ -1004,7 +1004,10 @@ mod tests {
     use strum::ParseError;
 
     use super::*;
-    use crate::style::{Color, Modifier, Stylize};
+    use crate::{
+        buffer::DefaultBuffer,
+        style::{Color, Modifier, Stylize},
+    };
 
     #[test]
     fn create_with_all_borders() {
@@ -1324,7 +1327,7 @@ mod tests {
     fn title() {
         use Alignment::*;
         use Position::*;
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 11, 3));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 11, 3));
         #[allow(deprecated)] // until Title is removed
         Block::bordered()
             .title(Title::from("A").position(Top).alignment(Left))
@@ -1335,7 +1338,7 @@ mod tests {
             .title(Title::from("F").position(Bottom).alignment(Right))
             .render(buffer.area, &mut buffer);
         #[rustfmt::skip]
-        let expected = Buffer::with_lines([
+        let expected =DefaultBuffer::with_lines([
             "┌A───B───C┐",
             "│         │",
             "└D───E───F┘",
@@ -1345,7 +1348,7 @@ mod tests {
 
     #[test]
     fn title_top_bottom() {
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 11, 3));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 11, 3));
         Block::bordered()
             .title_top(Line::raw("A").left_aligned())
             .title_top(Line::raw("B").centered())
@@ -1355,7 +1358,7 @@ mod tests {
             .title_bottom(Line::raw("F").right_aligned())
             .render(buffer.area, &mut buffer);
         #[rustfmt::skip]
-        let expected = Buffer::with_lines([
+        let expected =DefaultBuffer::with_lines([
             "┌A───B───C┐",
             "│         │",
             "└D───E───F┘",
@@ -1371,12 +1374,12 @@ mod tests {
             (Alignment::Right, "    test"),
         ];
         for (alignment, expected) in tests {
-            let mut buffer = Buffer::empty(Rect::new(0, 0, 8, 1));
+            let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 8, 1));
             Block::new()
                 .title_alignment(alignment)
                 .title("test")
                 .render(buffer.area, &mut buffer);
-            assert_eq!(buffer, Buffer::with_lines([expected]));
+            assert_eq!(buffer, DefaultBuffer::with_lines([expected]));
         }
     }
 
@@ -1388,83 +1391,86 @@ mod tests {
             (Alignment::Center, Alignment::Right, "    test"),
         ];
         for (block_title_alignment, alignment, expected) in tests {
-            let mut buffer = Buffer::empty(Rect::new(0, 0, 8, 1));
+            let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 8, 1));
             Block::new()
                 .title_alignment(block_title_alignment)
                 .title(Line::from("test").alignment(alignment))
                 .render(buffer.area, &mut buffer);
-            assert_eq!(buffer, Buffer::with_lines([expected]));
+            assert_eq!(buffer, DefaultBuffer::with_lines([expected]));
         }
     }
 
     /// This is a regression test for bug <https://github.com/ratatui/ratatui/issues/929>
     #[test]
     fn render_right_aligned_empty_title() {
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 15, 3));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 15, 3));
         Block::new()
             .title_alignment(Alignment::Right)
             .title("")
             .render(buffer.area, &mut buffer);
-        assert_eq!(buffer, Buffer::with_lines(["               "; 3]));
+        assert_eq!(buffer, DefaultBuffer::with_lines(["               "; 3]));
     }
 
     #[test]
     fn title_position() {
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 4, 2));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 4, 2));
         Block::new()
             .title_position(Position::Bottom)
             .title("test")
             .render(buffer.area, &mut buffer);
-        assert_eq!(buffer, Buffer::with_lines(["    ", "test"]));
+        assert_eq!(buffer, DefaultBuffer::with_lines(["    ", "test"]));
     }
 
     #[test]
     fn title_content_style() {
         for alignment in [Alignment::Left, Alignment::Center, Alignment::Right] {
-            let mut buffer = Buffer::empty(Rect::new(0, 0, 4, 1));
+            let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 4, 1));
             Block::new()
                 .title_alignment(alignment)
                 .title("test".yellow())
                 .render(buffer.area, &mut buffer);
-            assert_eq!(buffer, Buffer::with_lines(["test".yellow()]));
+            assert_eq!(buffer, DefaultBuffer::with_lines(["test".yellow()]));
         }
     }
 
     #[test]
     fn block_title_style() {
         for alignment in [Alignment::Left, Alignment::Center, Alignment::Right] {
-            let mut buffer = Buffer::empty(Rect::new(0, 0, 4, 1));
+            let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 4, 1));
             Block::new()
                 .title_alignment(alignment)
                 .title_style(Style::new().yellow())
                 .title("test")
                 .render(buffer.area, &mut buffer);
-            assert_eq!(buffer, Buffer::with_lines(["test".yellow()]));
+            assert_eq!(buffer, DefaultBuffer::with_lines(["test".yellow()]));
         }
     }
 
     #[test]
     fn title_style_overrides_block_title_style() {
         for alignment in [Alignment::Left, Alignment::Center, Alignment::Right] {
-            let mut buffer = Buffer::empty(Rect::new(0, 0, 4, 1));
+            let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 4, 1));
             Block::new()
                 .title_alignment(alignment)
                 .title_style(Style::new().green().on_red())
                 .title("test".yellow())
                 .render(buffer.area, &mut buffer);
-            assert_eq!(buffer, Buffer::with_lines(["test".yellow().on_red()]));
+            assert_eq!(
+                buffer,
+                DefaultBuffer::with_lines(["test".yellow().on_red()])
+            );
         }
     }
 
     #[test]
     fn title_border_style() {
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 10, 3));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 10, 3));
         Block::bordered()
             .title("test")
             .border_style(Style::new().yellow())
             .render(buffer.area, &mut buffer);
         #[rustfmt::skip]
-        let mut expected = Buffer::with_lines([
+        let mut expected =DefaultBuffer::with_lines([
             "┌test────┐",
             "│        │",
             "└────────┘",
@@ -1493,12 +1499,12 @@ mod tests {
 
     #[test]
     fn render_plain_border() {
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 10, 3));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 10, 3));
         Block::bordered()
             .border_type(BorderType::Plain)
             .render(buffer.area, &mut buffer);
         #[rustfmt::skip]
-        let expected = Buffer::with_lines([
+        let expected =DefaultBuffer::with_lines([
             "┌────────┐",
             "│        │",
             "└────────┘",
@@ -1508,12 +1514,12 @@ mod tests {
 
     #[test]
     fn render_rounded_border() {
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 10, 3));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 10, 3));
         Block::bordered()
             .border_type(BorderType::Rounded)
             .render(buffer.area, &mut buffer);
         #[rustfmt::skip]
-        let expected = Buffer::with_lines([
+        let expected =DefaultBuffer::with_lines([
             "╭────────╮",
             "│        │",
             "╰────────╯",
@@ -1523,12 +1529,12 @@ mod tests {
 
     #[test]
     fn render_double_border() {
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 10, 3));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 10, 3));
         Block::bordered()
             .border_type(BorderType::Double)
             .render(buffer.area, &mut buffer);
         #[rustfmt::skip]
-        let expected = Buffer::with_lines([
+        let expected =DefaultBuffer::with_lines([
             "╔════════╗",
             "║        ║",
             "╚════════╝",
@@ -1538,12 +1544,12 @@ mod tests {
 
     #[test]
     fn render_quadrant_inside() {
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 10, 3));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 10, 3));
         Block::bordered()
             .border_type(BorderType::QuadrantInside)
             .render(buffer.area, &mut buffer);
         #[rustfmt::skip]
-        let expected = Buffer::with_lines([
+        let expected =DefaultBuffer::with_lines([
             "▗▄▄▄▄▄▄▄▄▖",
             "▐        ▌",
             "▝▀▀▀▀▀▀▀▀▘",
@@ -1553,12 +1559,12 @@ mod tests {
 
     #[test]
     fn render_border_quadrant_outside() {
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 10, 3));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 10, 3));
         Block::bordered()
             .border_type(BorderType::QuadrantOutside)
             .render(buffer.area, &mut buffer);
         #[rustfmt::skip]
-        let expected = Buffer::with_lines([
+        let expected =DefaultBuffer::with_lines([
             "▛▀▀▀▀▀▀▀▀▜",
             "▌        ▐",
             "▙▄▄▄▄▄▄▄▄▟",
@@ -1568,12 +1574,12 @@ mod tests {
 
     #[test]
     fn render_solid_border() {
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 10, 3));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 10, 3));
         Block::bordered()
             .border_type(BorderType::Thick)
             .render(buffer.area, &mut buffer);
         #[rustfmt::skip]
-        let expected = Buffer::with_lines([
+        let expected =DefaultBuffer::with_lines([
             "┏━━━━━━━━┓",
             "┃        ┃",
             "┗━━━━━━━━┛",
@@ -1583,7 +1589,7 @@ mod tests {
 
     #[test]
     fn render_custom_border_set() {
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 10, 3));
+        let mut buffer = DefaultBuffer::empty(Rect::new(0, 0, 10, 3));
         Block::bordered()
             .border_set(border::Set {
                 top_left: "1",
@@ -1597,7 +1603,7 @@ mod tests {
             })
             .render(buffer.area, &mut buffer);
         #[rustfmt::skip]
-        let expected = Buffer::with_lines([
+        let expected =DefaultBuffer::with_lines([
             "1TTTTTTTT2",
             "L        R",
             "3BBBBBBBB4",

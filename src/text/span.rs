@@ -418,14 +418,14 @@ impl<'a> Styled for Span<'a> {
 }
 
 impl Widget for Span<'_> {
-    fn render(self, area: Rect, buf: &mut Buffer) {
+    fn render(self, area: Rect, buf: &mut impl Buffer) {
         self.render_ref(area, buf);
     }
 }
 
 impl WidgetRef for Span<'_> {
-    fn render_ref(&self, area: Rect, buf: &mut Buffer) {
-        let area = area.intersection(buf.area);
+    fn render_ref(&self, area: Rect, buf: &mut impl Buffer) {
+        let area = area.intersection(buf.area().clone());
         if area.is_empty() {
             return;
         }
@@ -510,11 +510,15 @@ mod tests {
     use rstest::{fixture, rstest};
 
     use super::*;
-    use crate::{buffer::Cell, layout::Alignment, style::Stylize};
+    use crate::{
+        buffer::{Cell, DefaultBuffer},
+        layout::Alignment,
+        style::Stylize,
+    };
 
     #[fixture]
-    fn small_buf() -> Buffer {
-        Buffer::empty(Rect::new(0, 0, 10, 1))
+    fn small_buf() -> DefaultBuffer {
+        DefaultBuffer::empty(Rect::new(0, 0, 10, 1))
     }
 
     #[test]
@@ -690,9 +694,9 @@ mod tests {
         fn render() {
             let style = Style::new().green().on_yellow();
             let span = Span::styled("test content", style);
-            let mut buf = Buffer::empty(Rect::new(0, 0, 15, 1));
+            let mut buf = DefaultBuffer::empty(Rect::new(0, 0, 15, 1));
             span.render(buf.area, &mut buf);
-            let expected = Buffer::with_lines([Line::from(vec![
+            let expected = DefaultBuffer::with_lines([Line::from(vec![
                 "test content".green().on_yellow(),
                 "   ".into(),
             ])]);
@@ -703,10 +707,10 @@ mod tests {
         #[case::x(20, 0)]
         #[case::y(0, 20)]
         #[case::both(20, 20)]
-        fn render_out_of_bounds(mut small_buf: Buffer, #[case] x: u16, #[case] y: u16) {
+        fn render_out_of_bounds(mut small_buf: DefaultBuffer, #[case] x: u16, #[case] y: u16) {
             let out_of_bounds = Rect::new(x, y, 10, 1);
             Span::raw("Hello, World!").render(out_of_bounds, &mut small_buf);
-            assert_eq!(small_buf, Buffer::empty(small_buf.area));
+            assert_eq!(small_buf, DefaultBuffer::empty(small_buf.area().clone()));
         }
 
         /// When the content of the span is longer than the area passed to render, the content
@@ -716,10 +720,10 @@ mod tests {
             let style = Style::new().green().on_yellow();
             let span = Span::styled("test content", style);
 
-            let mut buf = Buffer::empty(Rect::new(0, 0, 10, 1));
+            let mut buf = DefaultBuffer::empty(Rect::new(0, 0, 10, 1));
             span.render(Rect::new(0, 0, 5, 1), &mut buf);
 
-            let expected = Buffer::with_lines([Line::from(vec![
+            let expected = DefaultBuffer::with_lines([Line::from(vec![
                 "test ".green().on_yellow(),
                 "     ".into(),
             ])]);
@@ -732,10 +736,10 @@ mod tests {
         fn render_patches_existing_style() {
             let style = Style::new().green().on_yellow();
             let span = Span::styled("test content", style);
-            let mut buf = Buffer::empty(Rect::new(0, 0, 15, 1));
+            let mut buf = DefaultBuffer::empty(Rect::new(0, 0, 15, 1));
             buf.set_style(buf.area, Style::new().italic());
             span.render(buf.area, &mut buf);
-            let expected = Buffer::with_lines([Line::from(vec![
+            let expected = DefaultBuffer::with_lines([Line::from(vec![
                 "test content".green().on_yellow().italic(),
                 "   ".italic(),
             ])]);
@@ -748,12 +752,12 @@ mod tests {
         fn render_multi_width_symbol() {
             let style = Style::new().green().on_yellow();
             let span = Span::styled("test 😃 content", style);
-            let mut buf = Buffer::empty(Rect::new(0, 0, 15, 1));
+            let mut buf = DefaultBuffer::empty(Rect::new(0, 0, 15, 1));
             span.render(buf.area, &mut buf);
             // The existing code in buffer.set_line() handles multi-width graphemes by clearing the
             // cells of the hidden characters. This test ensures that the existing behavior is
             // preserved.
-            let expected = Buffer::with_lines(["test 😃 content".green().on_yellow()]);
+            let expected = DefaultBuffer::with_lines(["test 😃 content".green().on_yellow()]);
             assert_eq!(buf, expected);
         }
 
@@ -764,11 +768,13 @@ mod tests {
             // the 😃 emoji is 2 columns wide so it will be truncated
             let style = Style::new().green().on_yellow();
             let span = Span::styled("test 😃 content", style);
-            let mut buf = Buffer::empty(Rect::new(0, 0, 6, 1));
+            let mut buf = DefaultBuffer::empty(Rect::new(0, 0, 6, 1));
             span.render(buf.area, &mut buf);
 
-            let expected =
-                Buffer::with_lines([Line::from(vec!["test ".green().on_yellow(), " ".into()])]);
+            let expected = DefaultBuffer::with_lines([Line::from(vec![
+                "test ".green().on_yellow(),
+                " ".into(),
+            ])]);
             assert_eq!(buf, expected);
         }
 
@@ -778,10 +784,10 @@ mod tests {
         fn render_overflowing_area_truncates() {
             let style = Style::new().green().on_yellow();
             let span = Span::styled("test content", style);
-            let mut buf = Buffer::empty(Rect::new(0, 0, 15, 1));
+            let mut buf = DefaultBuffer::empty(Rect::new(0, 0, 15, 1));
             span.render(Rect::new(10, 0, 20, 1), &mut buf);
 
-            let expected = Buffer::with_lines([Line::from(vec![
+            let expected = DefaultBuffer::with_lines([Line::from(vec![
                 "          ".into(),
                 "test ".green().on_yellow(),
             ])]);
@@ -791,7 +797,7 @@ mod tests {
         #[test]
         fn render_first_zero_width() {
             let span = Span::raw("\u{200B}abc");
-            let mut buf = Buffer::empty(Rect::new(0, 0, 3, 1));
+            let mut buf = DefaultBuffer::empty(Rect::new(0, 0, 3, 1));
             span.render(buf.area, &mut buf);
             assert_eq!(
                 buf.content(),
@@ -802,7 +808,7 @@ mod tests {
         #[test]
         fn render_second_zero_width() {
             let span = Span::raw("a\u{200B}bc");
-            let mut buf = Buffer::empty(Rect::new(0, 0, 3, 1));
+            let mut buf = DefaultBuffer::empty(Rect::new(0, 0, 3, 1));
             span.render(buf.area, &mut buf);
             assert_eq!(
                 buf.content(),
@@ -813,7 +819,7 @@ mod tests {
         #[test]
         fn render_middle_zero_width() {
             let span = Span::raw("ab\u{200B}c");
-            let mut buf = Buffer::empty(Rect::new(0, 0, 3, 1));
+            let mut buf = DefaultBuffer::empty(Rect::new(0, 0, 3, 1));
             span.render(buf.area, &mut buf);
             assert_eq!(
                 buf.content(),
@@ -824,7 +830,7 @@ mod tests {
         #[test]
         fn render_last_zero_width() {
             let span = Span::raw("abc\u{200B}");
-            let mut buf = Buffer::empty(Rect::new(0, 0, 3, 1));
+            let mut buf = DefaultBuffer::empty(Rect::new(0, 0, 3, 1));
             span.render(buf.area, &mut buf);
             assert_eq!(
                 buf.content(),
@@ -835,7 +841,7 @@ mod tests {
         #[test]
         fn render_with_newlines() {
             let span = Span::raw("a\nb");
-            let mut buf = Buffer::empty(Rect::new(0, 0, 2, 1));
+            let mut buf = DefaultBuffer::empty(Rect::new(0, 0, 2, 1));
             span.render(buf.area, &mut buf);
             assert_eq!(buf.content(), [Cell::new("a"), Cell::new("b")]);
         }
@@ -850,7 +856,7 @@ mod tests {
     #[test]
     fn issue_1160() {
         let span = Span::raw("Hello\u{200E}");
-        let mut buf = Buffer::empty(Rect::new(0, 0, 5, 1));
+        let mut buf = DefaultBuffer::empty(Rect::new(0, 0, 5, 1));
         span.render(buf.area, &mut buf);
         assert_eq!(
             buf.content(),

@@ -1,5 +1,5 @@
 use crate::{
-    buffer::Buffer,
+    buffer::{Buffer, DefaultBuffer},
     layout::{Position, Rect},
     widgets::{StatefulWidget, StatefulWidgetRef, Widget, WidgetRef},
 };
@@ -27,7 +27,7 @@ pub struct Frame<'a> {
     pub(crate) viewport_area: Rect,
 
     /// The buffer that is used to draw the current frame
-    pub(crate) buffer: &'a mut Buffer,
+    pub(crate) buffer: &'a mut DefaultBuffer,
 
     /// The frame count indicating the sequence number of this frame.
     pub(crate) count: usize,
@@ -41,7 +41,7 @@ pub struct Frame<'a> {
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct CompletedFrame<'a> {
     /// The buffer that was used to draw the last frame.
-    pub buffer: &'a Buffer,
+    pub buffer: &'a DefaultBuffer,
     /// The size of the last frame.
     pub area: Rect,
     /// The frame count indicating the sequence number of this frame.
@@ -223,7 +223,7 @@ impl Frame<'_> {
     }
 
     /// Gets the buffer that this `Frame` draws into as a mutable reference.
-    pub fn buffer_mut(&mut self) -> &mut Buffer {
+    pub fn buffer_mut(&mut self) -> &mut DefaultBuffer {
         self.buffer
     }
 

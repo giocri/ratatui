@@ -106,7 +106,7 @@ use crate::{buffer::Buffer, layout::Rect, style::Style};
 /// struct MyWidget;
 ///
 /// impl Widget for MyWidget {
-///     fn render(self, area: Rect, buf: &mut Buffer) {
+///     fn render(self, area: Rect, buf: &mut impl Buffer) {
 ///         Line::raw("Hello").render(area, buf);
 ///     }
 /// }
@@ -114,7 +114,7 @@ use crate::{buffer::Buffer, layout::Rect, style::Style};
 pub trait Widget {
     /// Draws the current state of the widget in the given buffer. That is the only method required
     /// to implement a custom widget.
-    fn render(self, area: Rect, buf: &mut Buffer)
+    fn render(self, area: Rect, buf: &mut impl Buffer)
     where
         Self: Sized;
 }
@@ -241,7 +241,7 @@ pub trait StatefulWidget {
     type State;
     /// Draws the current state of the widget in the given buffer. That is the only method required
     /// to implement a custom stateful widget.
-    fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State);
+    fn render(self, area: Rect, buf: &mut impl Buffer, state: &mut Self::State);
 }
 
 /// A `WidgetRef` is a trait that allows rendering a widget by reference.
@@ -279,32 +279,32 @@ pub trait StatefulWidget {
 /// struct Farewell;
 ///
 /// impl WidgetRef for Greeting {
-///     fn render_ref(&self, area: Rect, buf: &mut Buffer) {
+///     fn render_ref(&self, area: Rect, buf: &mut impl Buffer) {
 ///         Line::raw("Hello").render(area, buf);
 ///     }
 /// }
 ///
 /// /// Only needed for backwards compatibility
 /// impl Widget for Greeting {
-///     fn render(self, area: Rect, buf: &mut Buffer) {
+///     fn render(self, area: Rect, buf: &mut impl Buffer) {
 ///         self.render_ref(area, buf);
 ///     }
 /// }
 ///
 /// impl WidgetRef for Farewell {
-///     fn render_ref(&self, area: Rect, buf: &mut Buffer) {
+///     fn render_ref(&self, area: Rect, buf: &mut impl Buffer) {
 ///         Line::raw("Goodbye").right_aligned().render(area, buf);
 ///     }
 /// }
 ///
 /// /// Only needed for backwards compatibility
 /// impl Widget for Farewell {
-///     fn render(self, area: Rect, buf: &mut Buffer) {
+///     fn render(self, area: Rect, buf: &mut impl Buffer) {
 ///         self.render_ref(area, buf);
 ///     }
 /// }
 ///
-/// # fn render(area: Rect, buf: &mut Buffer) {
+/// # fn render(area: Rect, buf: &mut impl Buffer) {
 /// let greeting = Greeting;
 /// let farewell = Farewell;
 ///
@@ -324,12 +324,12 @@ pub trait StatefulWidget {
 pub trait WidgetRef {
     /// Draws the current state of the widget in the given buffer. That is the only method required
     /// to implement a custom widget.
-    fn render_ref(&self, area: Rect, buf: &mut Buffer);
+    fn render_ref(&self, area: Rect, buf: &mut impl Buffer);
 }
 
 /// This allows you to render a widget by reference.
 impl<W: WidgetRef> Widget for &W {
-    fn render(self, area: Rect, buf: &mut Buffer) {
+    fn render(self, area: Rect, buf: &mut impl Buffer) {
         self.render_ref(area, buf);
     }
 }
@@ -361,20 +361,20 @@ impl<W: WidgetRef> Widget for &W {
 /// struct Child;
 ///
 /// impl WidgetRef for Child {
-///     fn render_ref(&self, area: Rect, buf: &mut Buffer) {
+///     fn render_ref(&self, area: Rect, buf: &mut impl Buffer) {
 ///         Line::raw("Hello from child").render(area, buf);
 ///     }
 /// }
 ///
 /// impl WidgetRef for Parent {
-///     fn render_ref(&self, area: Rect, buf: &mut Buffer) {
+///     fn render_ref(&self, area: Rect, buf: &mut impl Buffer) {
 ///         self.child.render_ref(area, buf);
 ///     }
 /// }
 /// # }
 /// ```
 impl<W: WidgetRef> WidgetRef for Option<W> {
-    fn render_ref(&self, area: Rect, buf: &mut Buffer) {
+    fn render_ref(&self, area: Rect, buf: &mut impl Buffer) {
         if let Some(widget) = self {
             widget.render_ref(area, buf);
         }
@@ -413,19 +413,19 @@ impl<W: WidgetRef> WidgetRef for Option<W> {
 ///
 /// impl StatefulWidgetRef for PersonalGreeting {
 ///     type State = String;
-///     fn render_ref(&self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
+///     fn render_ref(&self, area: Rect, buf: &mut impl Buffer, state: &mut Self::State) {
 ///         Line::raw(format!("Hello {}", state)).render(area, buf);
 ///     }
 /// }
 ///
 /// impl StatefulWidget for PersonalGreeting {
 ///     type State = String;
-///     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
+///     fn render(self, area: Rect, buf: &mut impl Buffer, state: &mut Self::State) {
 ///         (&self).render_ref(area, buf, state);
 ///     }
 /// }
 ///
-/// fn render(area: Rect, buf: &mut Buffer) {
+/// fn render(area: Rect, buf: &mut impl Buffer) {
 ///     let widget = PersonalGreeting;
 ///     let mut state = "world".to_string();
 ///     widget.render(area, buf, &mut state);
@@ -440,7 +440,7 @@ pub trait StatefulWidgetRef {
     type State;
     /// Draws the current state of the widget in the given buffer. That is the only method required
     /// to implement a custom stateful widget.
-    fn render_ref(&self, area: Rect, buf: &mut Buffer, state: &mut Self::State);
+    fn render_ref(&self, area: Rect, buf: &mut impl Buffer, state: &mut Self::State);
 }
 
 // Note: while StatefulWidgetRef is marked as unstable, the blanket implementation of StatefulWidget
@@ -453,7 +453,7 @@ pub trait StatefulWidgetRef {
 // /// This allows you to render a stateful widget by reference.
 // impl<W: StatefulWidgetRef> StatefulWidget for &W {
 //     type State = W::State;
-//     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
+//     fn render(self, area: Rect, buf: &mut impl Buffer, state: &mut Self::State) {
 //         StatefulWidgetRef::render_ref(self, area, buf, state);
 //     }
 // }
@@ -465,7 +465,7 @@ pub trait StatefulWidgetRef {
 /// rendered by reference, thereby avoiding the need for string cloning or ownership transfer when
 /// drawing the text to the screen.
 impl Widget for &str {
-    fn render(self, area: Rect, buf: &mut Buffer) {
+    fn render(self, area: Rect, buf: &mut impl Buffer) {
         self.render_ref(area, buf);
     }
 }
@@ -477,7 +477,7 @@ impl Widget for &str {
 /// the default text style when rendering onto the provided [`Buffer`] at the position defined by
 /// [`Rect`].
 impl WidgetRef for &str {
-    fn render_ref(&self, area: Rect, buf: &mut Buffer) {
+    fn render_ref(&self, area: Rect, buf: &mut impl Buffer) {
         buf.set_stringn(area.x, area.y, self, area.width as usize, Style::new());
     }
 }
@@ -487,7 +487,7 @@ impl WidgetRef for &str {
 /// This implementation enables an owned `String` to be treated as a widget, which can be rendered
 /// on a [`Buffer`] within the bounds of a given [`Rect`].
 impl Widget for String {
-    fn render(self, area: Rect, buf: &mut Buffer) {
+    fn render(self, area: Rect, buf: &mut impl Buffer) {
         self.render_ref(area, buf);
     }
 }
@@ -498,7 +498,7 @@ impl Widget for String {
 /// style settings. It ensures that an owned `String` can be rendered efficiently by reference,
 /// without the need to give up ownership of the underlying text.
 impl WidgetRef for String {
-    fn render_ref(&self, area: Rect, buf: &mut Buffer) {
+    fn render_ref(&self, area: Rect, buf: &mut impl Buffer) {
         buf.set_stringn(area.x, area.y, self, area.width as usize, Style::new());
     }
 }
@@ -508,11 +508,11 @@ mod tests {
     use rstest::{fixture, rstest};
 
     use super::*;
-    use crate::text::Line;
+    use crate::{buffer::DefaultBuffer, text::Line};
 
     #[fixture]
-    fn buf() -> Buffer {
-        Buffer::empty(Rect::new(0, 0, 20, 1))
+    fn buf() -> DefaultBuffer {
+        DefaultBuffer::empty(Rect::new(0, 0, 20, 1))
     }
 
     mod widget {
@@ -521,13 +521,13 @@ mod tests {
         struct Greeting;
 
         impl Widget for Greeting {
-            fn render(self, area: Rect, buf: &mut Buffer) {
+            fn render(self, area: Rect, buf: &mut impl Buffer) {
                 Line::from("Hello").render(area, buf);
             }
         }
 
         #[rstest]
-        fn render(mut buf: Buffer) {
+        fn render(mut buf: DefaultBuffer) {
             let widget = Greeting;
             widget.render(buf.area, &mut buf);
             assert_eq!(buf, Buffer::with_lines(["Hello               "]));
@@ -541,47 +541,47 @@ mod tests {
         struct Farewell;
 
         impl WidgetRef for Greeting {
-            fn render_ref(&self, area: Rect, buf: &mut Buffer) {
+            fn render_ref(&self, area: Rect, buf: &mut impl Buffer) {
                 Line::from("Hello").render(area, buf);
             }
         }
 
         impl WidgetRef for Farewell {
-            fn render_ref(&self, area: Rect, buf: &mut Buffer) {
+            fn render_ref(&self, area: Rect, buf: &mut impl Buffer) {
                 Line::from("Goodbye").right_aligned().render(area, buf);
             }
         }
 
         #[rstest]
-        fn render_ref(mut buf: Buffer) {
+        fn render_ref(mut buf: DefaultBuffer) {
             let widget = Greeting;
             widget.render_ref(buf.area, &mut buf);
-            assert_eq!(buf, Buffer::with_lines(["Hello               "]));
+            assert_eq!(buf, DefaultBuffer::with_lines(["Hello               "]));
         }
 
         /// Ensure that the blanket implementation of `Widget` for `&W` where `W` implements
         /// `WidgetRef` works as expected.
         #[rstest]
-        fn blanket_render(mut buf: Buffer) {
+        fn blanket_render(mut buf: DefaultBuffer) {
             let widget = &Greeting;
             widget.render(buf.area, &mut buf);
-            assert_eq!(buf, Buffer::with_lines(["Hello               "]));
+            assert_eq!(buf, DefaultBuffer::with_lines(["Hello               "]));
         }
 
         #[rstest]
-        fn box_render_ref(mut buf: Buffer) {
+        fn box_render_ref(mut buf: DefaultBuffer) {
             let widget: Box<dyn WidgetRef> = Box::new(Greeting);
             widget.render_ref(buf.area, &mut buf);
-            assert_eq!(buf, Buffer::with_lines(["Hello               "]));
+            assert_eq!(buf, DefaultBuffer::with_lines(["Hello               "]));
         }
 
         #[rstest]
-        fn vec_box_render(mut buf: Buffer) {
+        fn vec_box_render(mut buf: DefaultBuffer) {
             let widgets: Vec<Box<dyn WidgetRef>> = vec![Box::new(Greeting), Box::new(Farewell)];
             for widget in widgets {
                 widget.render_ref(buf.area, &mut buf);
             }
-            assert_eq!(buf, Buffer::with_lines(["Hello        Goodbye"]));
+            assert_eq!(buf, DefaultBuffer::with_lines(["Hello        Goodbye"]));
         }
     }
 
@@ -597,16 +597,16 @@ mod tests {
 
         impl StatefulWidget for PersonalGreeting {
             type State = String;
-            fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
+            fn render(self, area: Rect, buf: &mut impl Buffer, state: &mut Self::State) {
                 Line::from(format!("Hello {state}")).render(area, buf);
             }
         }
 
         #[rstest]
-        fn render(mut buf: Buffer, mut state: String) {
+        fn render(mut buf: DefaultBuffer, mut state: String) {
             let widget = PersonalGreeting;
             widget.render(buf.area, &mut buf, &mut state);
-            assert_eq!(buf, Buffer::with_lines(["Hello world         "]));
+            assert_eq!(buf, DefaultBuffer::with_lines(["Hello world         "]));
         }
     }
 
@@ -617,16 +617,16 @@ mod tests {
 
         impl StatefulWidgetRef for PersonalGreeting {
             type State = String;
-            fn render_ref(&self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
+            fn render_ref(&self, area: Rect, buf: &mut impl Buffer, state: &mut Self::State) {
                 Line::from(format!("Hello {state}")).render(area, buf);
             }
         }
 
         #[rstest]
-        fn render_ref(mut buf: Buffer, mut state: String) {
+        fn render_ref(mut buf: DefaultBuffer, mut state: String) {
             let widget = PersonalGreeting;
             widget.render_ref(buf.area, &mut buf, &mut state);
-            assert_eq!(buf, Buffer::with_lines(["Hello world         "]));
+            assert_eq!(buf, DefaultBuffer::with_lines(["Hello world         "]));
         }
 
         // Note this cannot be tested until the blanket implementation of StatefulWidget for &W
@@ -642,10 +642,10 @@ mod tests {
         // }
 
         #[rstest]
-        fn box_render_render(mut buf: Buffer, mut state: String) {
+        fn box_render_render(mut buf: DefaultBuffer, mut state: String) {
             let widget = Box::new(PersonalGreeting);
             widget.render_ref(buf.area, &mut buf, &mut state);
-            assert_eq!(buf, Buffer::with_lines(["Hello world         "]));
+            assert_eq!(buf, DefaultBuffer::with_lines(["Hello world         "]));
         }
     }
 
@@ -655,23 +655,23 @@ mod tests {
         struct Greeting;
 
         impl WidgetRef for Greeting {
-            fn render_ref(&self, area: Rect, buf: &mut Buffer) {
+            fn render_ref(&self, area: Rect, buf: &mut impl Buffer) {
                 Line::from("Hello").render(area, buf);
             }
         }
 
         #[rstest]
-        fn render_ref_some(mut buf: Buffer) {
+        fn render_ref_some(mut buf: DefaultBuffer) {
             let widget = Some(Greeting);
             widget.render_ref(buf.area, &mut buf);
-            assert_eq!(buf, Buffer::with_lines(["Hello               "]));
+            assert_eq!(buf, DefaultBuffer::with_lines(["Hello               "]));
         }
 
         #[rstest]
-        fn render_ref_none(mut buf: Buffer) {
+        fn render_ref_none(mut buf: DefaultBuffer) {
             let widget: Option<Greeting> = None;
             widget.render_ref(buf.area, &mut buf);
-            assert_eq!(buf, Buffer::with_lines(["                    "]));
+            assert_eq!(buf, DefaultBuffer::with_lines(["                    "]));
         }
     }
 
@@ -679,68 +679,68 @@ mod tests {
         use super::*;
 
         #[rstest]
-        fn render(mut buf: Buffer) {
+        fn render(mut buf: DefaultBuffer) {
             "hello world".render(buf.area, &mut buf);
-            assert_eq!(buf, Buffer::with_lines(["hello world         "]));
+            assert_eq!(buf, DefaultBuffer::with_lines(["hello world         "]));
         }
 
         #[rstest]
-        fn render_area(mut buf: Buffer) {
+        fn render_area(mut buf: DefaultBuffer) {
             let area = Rect::new(buf.area.x, buf.area.y, 11, buf.area.height);
             "hello world, just hello".render(area, &mut buf);
-            assert_eq!(buf, Buffer::with_lines(["hello world         "]));
+            assert_eq!(buf, DefaultBuffer::with_lines(["hello world         "]));
         }
 
         #[rstest]
-        fn render_ref(mut buf: Buffer) {
+        fn render_ref(mut buf: DefaultBuffer) {
             "hello world".render_ref(buf.area, &mut buf);
-            assert_eq!(buf, Buffer::with_lines(["hello world         "]));
+            assert_eq!(buf, DefaultBuffer::with_lines(["hello world         "]));
         }
 
         #[rstest]
-        fn option_render(mut buf: Buffer) {
+        fn option_render(mut buf: DefaultBuffer) {
             Some("hello world").render(buf.area, &mut buf);
-            assert_eq!(buf, Buffer::with_lines(["hello world         "]));
+            assert_eq!(buf, DefaultBuffer::with_lines(["hello world         "]));
         }
 
         #[rstest]
-        fn option_render_ref(mut buf: Buffer) {
+        fn option_render_ref(mut buf: DefaultBuffer) {
             Some("hello world").render_ref(buf.area, &mut buf);
-            assert_eq!(buf, Buffer::with_lines(["hello world         "]));
+            assert_eq!(buf, DefaultBuffer::with_lines(["hello world         "]));
         }
     }
 
     mod string {
         use super::*;
         #[rstest]
-        fn render(mut buf: Buffer) {
+        fn render(mut buf: DefaultBuffer) {
             String::from("hello world").render(buf.area, &mut buf);
-            assert_eq!(buf, Buffer::with_lines(["hello world         "]));
+            assert_eq!(buf, DefaultBuffer::with_lines(["hello world         "]));
         }
 
         #[rstest]
-        fn render_area(mut buf: Buffer) {
+        fn render_area(mut buf: DefaultBuffer) {
             let area = Rect::new(buf.area.x, buf.area.y, 11, buf.area.height);
             String::from("hello world, just hello").render(area, &mut buf);
-            assert_eq!(buf, Buffer::with_lines(["hello world         "]));
+            assert_eq!(buf, DefaultBuffer::with_lines(["hello world         "]));
         }
 
         #[rstest]
-        fn render_ref(mut buf: Buffer) {
+        fn render_ref(mut buf: DefaultBuffer) {
             String::from("hello world").render_ref(buf.area, &mut buf);
-            assert_eq!(buf, Buffer::with_lines(["hello world         "]));
+            assert_eq!(buf, DefaultBuffer::with_lines(["hello world         "]));
         }
 
         #[rstest]
-        fn option_render(mut buf: Buffer) {
+        fn option_render(mut buf: DefaultBuffer) {
             Some(String::from("hello world")).render(buf.area, &mut buf);
-            assert_eq!(buf, Buffer::with_lines(["hello world         "]));
+            assert_eq!(buf, DefaultBuffer::with_lines(["hello world         "]));
         }
 
         #[rstest]
-        fn option_render_ref(mut buf: Buffer) {
+        fn option_render_ref(mut buf: DefaultBuffer) {
             Some(String::from("hello world")).render_ref(buf.area, &mut buf);
-            assert_eq!(buf, Buffer::with_lines(["hello world         "]));
+            assert_eq!(buf, DefaultBuffer::with_lines(["hello world         "]));
         }
     }
 }
